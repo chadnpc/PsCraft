@@ -6,7 +6,7 @@
   #   In one use case, its just a simplified wrapper for New-ModuleManifest which answers some of the parameters based on the files already in the module folder.
   #   In the second use case, it allows you to collect one or more scripts and put them into a new module folder.
   # .LINK
-  #   https://github.com/alainQtec/PsCraft/blob/main/Public/ModuleManager/New-PSModule.ps1
+  #   https://github.com/chadnpc/PsCraft/blob/main/Public/ModuleManager/New-PSModule.ps1
   # .EXAMPLE
   #   $m = New-PsModule
   #   This example shows how to create a random module.

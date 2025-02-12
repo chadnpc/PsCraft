@@ -5,20 +5,20 @@ cff-version: 1.2.0
 title: PsCraft
 message: >-
   A Toolbox to speed up common PowerShell development
-  tasks. 
+  tasks.
 type: software
 authors:
   - given-names: Alain
     family-names: Herve
-    email: alainqtec@gmail.com
+    email: chadnpc@gmail.com
 identifiers:
   - type: url
     value: 'https://alainqtec.dev/'
     description: Personal website
   - type: url
-    value: 'https://x.com/alainQtec'
+    value: 'https://x.com/chadnpc'
     description: twitter profile
-repository-code: 'https://github.com/alainQtec/PsCraft'
+repository-code: 'https://github.com/chadnpc/PsCraft'
 url: 'https://powershellgallery.com/packages/PsCraft'
 abstract: >-
   PsCraft Toolbox provides cmdlets to speed up common

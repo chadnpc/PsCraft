@@ -7,15 +7,15 @@
 
 .AUTHOR Alain Herve
 
-.COMPANYNAME alainQtec
+.COMPANYNAME chadnpc
 
-.COPYRIGHT alainQtec
+.COPYRIGHT chadnpc
 
 .TAGS PowershelGallery
 
 .LICENSEURI
 
-.PROJECTURI https://github.com/alainQtec/PsCraft
+.PROJECTURI https://github.com/chadnpc/PsCraft
 
 .ICONURI
 

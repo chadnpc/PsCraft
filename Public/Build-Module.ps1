@@ -12,7 +12,7 @@
   #    Build-Module deploy
   #    Will build the module, test it and deploy it to PsGallery
   # .LINK
-  #    https://github.com/alainQtec/PsCraft/blob/main/public/Build-Module.ps1
+  #    https://github.com/chadnpc/PsCraft/blob/main/public/Build-Module.ps1
   [cmdletbinding(DefaultParameterSetName = 'task')]
   param(
     [parameter(Mandatory = $false, Position = 0, ParameterSetName = 'task')]
@@ -309,7 +309,7 @@
             try {
               [ValidateNotNullOrWhiteSpace()][string]$versionToDeploy = $versionToDeploy.ToString()
               $manifest = Import-PowerShellDataFile -Path $([Environment]::GetEnvironmentVariable($env:RUN_ID + 'PSModuleManifest'))
-              $latest_Github_release = Invoke-WebRequest "https://api.github.com/repos/alainQtec/$ProjectName/releases/latest" | ConvertFrom-Json
+              $latest_Github_release = Invoke-WebRequest "https://api.github.com/repos/chadnpc/$ProjectName/releases/latest" | ConvertFrom-Json
               $latest_Github_release = [PSCustomObject]@{
                 name = $latest_Github_release.name
                 ver  = [version]::new($latest_Github_release.tag_name.substring(1))

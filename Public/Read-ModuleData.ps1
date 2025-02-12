@@ -4,7 +4,7 @@
   # .DESCRIPTION
   #   By default Get-ModuleManifest gets all keys in the metadata file
   # .LINK
-  #   https://github.com/alainQtec/PsCraft/blob/main/Public/Read-ModuleData.ps1
+  #   https://github.com/chadnpc/PsCraft/blob/main/Public/Read-ModuleData.ps1
   # .EXAMPLE
   #   Read-ModuleData .
   #   Reads the Moduledata from the current directory, assumes that the module name is the same as the directory name
