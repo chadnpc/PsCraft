@@ -27,7 +27,6 @@
   )
 
   begin {
-    #Requires -Modules cliHelper.core
     class PSGalleryItem {
       [string] $Name
       [version] $Version
