@@ -128,7 +128,7 @@
             Invoke-CommandWithLog { Install-PackageProvider -Name NuGet -Force | Out-Null }
           }
           $build_sys = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildSystem');
-          $lastCommit = git log -1 --pretty=%B
+          $lastCommit = $(try { git log -1 --pretty=%B } catch { Write-Warning $_; [string]::Empty })
           Write-BuildLog "Current build system is $build_sys"
           Write-Heading "Finalizing build Prerequisites and Resolving dependencies ..."
 
@@ -148,7 +148,7 @@
                   Write-Warning "Force Deploying detected"
                 } else {
                   "Skipping Psake for this job!" | Write-Host -f Yellow
-                  exit 0
+                  return
                 }
               } else {
                 $MSG | Write-Host -f Green
@@ -343,11 +343,11 @@
                 [ValidateNotNullOrWhiteSpace()][string]$ReleaseNotes = $ReleaseNotes
                 "    Creating Release ZIP..."
                 $ZipTmpPath = [System.IO.Path]::Combine($ProjectRoot, "$($([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName'))).zip")
-                if ([IO.File]::Exists($ZipTmpPath)) { Remove-Item $ZipTmpPath -Force }
+                if ([IO.File]::Exists($ZipTmpPath)) { Remove-Item $ZipTmpPath -Force -ea Ignore }
                 Add-Type -Assembly System.IO.Compression.FileSystem
                 [System.IO.Compression.ZipFile]::CreateFromDirectory($outputModDir, $ZipTmpPath)
                 Write-Heading "    Publishing Release v$versionToDeploy @ commit Id [$($commitId)] to GitHub..."
-                $ReleaseNotes += (git log -1 --pretty=%B | Select-Object -Skip 2) -join "`n"
+                $ReleaseNotes += $(try { git log -1 --pretty=%B | Select-Object -Skip 2 } catch { Write-Warning $_; [string]::Empty }) -join "`n"
                 $ReleaseNotes = $ReleaseNotes.Replace('<versionToDeploy>', $versionToDeploy)
                 Set-Env -Name ('{0}{1}' -f $env:RUN_ID, 'ReleaseNotes') -Value $ReleaseNotes
                 $gitHubParams = @{
@@ -461,7 +461,7 @@
       Set-Content -Path $Psake_BuildFile -Value $script:PSake_ScriptBlock.ToString().Replace('<build_requirements>', [string]('@("' + ($build_requirements -join '", "') + '")')) | Out-Null
       if ($Help.IsPresent) {
         Write-Heading "Getting help"; Get-PSakeScriptTasks -BuildFile $Psake_BuildFile.FullName | Sort-Object -Property Name | Format-Table -Property Name, Description, Alias, DependsOn;
-        exit 0
+        return
       };
       [Environment]::SetEnvironmentVariable('IsAC', $(if (![string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable('GITHUB_WORKFLOW'))) { '1' } else { '0' }), [System.EnvironmentVariableTarget]::Process)
       [Environment]::SetEnvironmentVariable('IsCI', $(if (![string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable('TF_BUILD'))) { '1' } else { '0' }), [System.EnvironmentVariableTarget]::Process)
@@ -485,7 +485,7 @@
     } finally {
       $psake.build_success = $null -eq $psake.error_message
       $LocalPSRepo = [IO.Path]::Combine([environment]::GetEnvironmentVariable("HOME"), 'LocalPSRepo'); $Host.UI.WriteLine()
-      Remove-Item $Psake_BuildFile -ea Ignore -Verbose:$false | Out-Null
+      Remove-Item $Psake_BuildFile -Force -ea Ignore -Verbose:$false | Out-Null
       if ($psake.build_success) {
         Write-Heading "Create a Local repository"
         if (!(Get-Variable -Name IsWindows -ea Ignore) -or $(Get-Variable IsWindows -ValueOnly)) {
@@ -501,7 +501,7 @@
           # Publish To LocalRepo
           $ModulePackage = [IO.Path]::Combine($LocalPSRepo, "${ModuleName}.${BuildNumber}.nupkg")
           if ([IO.File]::Exists($ModulePackage)) {
-            Remove-Item -Path $ModulePackage -ea 'SilentlyContinue'
+            Remove-Item -Path $ModulePackage -Force -ea 'SilentlyContinue'
           }
           Write-Heading "Publish to Local PsRepository"
           $RequiredModules = Read-ModuleData -File ([IO.Path]::Combine($ModulePath, "$([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')).psd1")) -Property RequiredModules -Verbose:$false
@@ -510,8 +510,8 @@
             Write-Verbose "Publish RequiredModule $Module ..."
             Publish-Module -Path $mdPath -Repository LocalPSRepo -Verbose:$false -ea Ignore
           }
-          Publish-Module -Path $ModulePath -Repository LocalPSRepo
-          Install-Module $ModuleName -Repository LocalPSRepo
+          Publish-Module -Path $ModulePath -Repository LocalPSRepo -Verbose:$false
+          Install-Module $ModuleName -Repository LocalPSRepo -Force -Verbose:$false
           if ($Import.IsPresent -and $(Get-Variable psake -Scope global -ValueOnly).build_success) {
             Write-Heading "Import $ModuleName to local scope"
             # Import-Module $([IO.Path]::Combine([Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput'), $ModuleName))
@@ -537,7 +537,7 @@
         } else {
           Write-Warning "Invalid RUN_ID! can't remove env variables.`n"
         }
-        if ($ModuleName) { Uninstall-Module $ModuleName -MinimumVersion $BuildNumber -ea Ignore }
+        if ($ModuleName) { Uninstall-Module $ModuleName -MinimumVersion $BuildNumber -Force -ea Ignore }
         if ([IO.Directory]::Exists($LocalPSRepo)) {
           if ($null -ne (Get-PSRepository -Name 'LocalPSRepo' -ea Ignore -Verbose:$false)) {
             Invoke-Command -ScriptBlock ([ScriptBlock]::Create("Unregister-PSRepository -Name 'LocalPSRepo' -Verbose:`$false -ea Ignore"))
@@ -548,6 +548,6 @@
     }
   }
   end {
-    exit ([int](!$psake.build_success))
+    return ([int](!$psake.build_success))
   }
 }
