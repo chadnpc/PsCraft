@@ -38,8 +38,14 @@ $module = New-PsModule -Name testmodule123 -description "a test module"
 ```PowerShell
 cd testmodule123
 code .
-# do edits, then
+# do edits, ex: set your NUGET_API_KEY in .env then
 ./build.ps1
+```
+
+Publish v0.1.0
+
+```PowerShell
+Publish-Module -Path ./BuildOutput/testmodule123/0.1.0/ -NuGetApiKey $env:NUGET_API_KEY -Verbose
 ```
 
 </li>
