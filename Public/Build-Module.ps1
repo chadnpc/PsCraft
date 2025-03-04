@@ -61,7 +61,6 @@
   Begin {
     #Requires -RunAsAdministrator
     #Requires -Psedition Core
-    #Requires -Modules cliHelper.core
     $script:build_requirements = $($RequiredModules + @(
         "PackageManagement", "PSScriptAnalyzer",
         "cliHelper.env", "cliHelper.core",
