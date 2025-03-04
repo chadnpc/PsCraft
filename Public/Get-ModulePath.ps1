@@ -1,6 +1,6 @@
 ﻿function Get-ModulePath {
   # .DESCRIPTION
-  #  Gets the path of installed module; a path you can use with Import-module.
+  #  Gets the path of installed modul; a path you can use with Import-module.
   # .EXAMPLE
   # Get-ModulePath -Name posh-git -version 0.7.3 | Import-module -verbose
   # Will retrieve posh-git version 0.7.3 from $env:PSModulePath and import it.
@@ -25,7 +25,7 @@
     [string]$Scope = 'LocalMachine'
   )
   if ($PSBoundParameters.ContainsKey('version')) {
-    return (Find-InstalledModule -Name $Name -version ([version]::New($version)) -Scope $Scope).Path
+    return (Find-InstalledModule -Name $Name -Version ([version]::New($version)) -Scope $Scope).Path
   } else {
     return (Find-InstalledModule -Name $Name -Scope $Scope).Path
   }

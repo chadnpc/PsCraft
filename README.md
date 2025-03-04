@@ -55,6 +55,11 @@ For more usage read the [docs](/docs/Readme.md). they pretty easy!
 
 **[_W.I.P_]**
 
+- Cleaning up repository structure
+- Bug fixes and optimizations
+- Adding free ai (no api key will be required)
+
+
 <p>Use <a href="https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree">todo tree</a> to find all of them.</p>
 
 ## License

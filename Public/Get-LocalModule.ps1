@@ -8,7 +8,7 @@
   [CmdletBinding()]
   [OutputType([LocalPsModule])]
   param (
-    # The name of the installed module to search on the machine.
+    # The name of the installed modul to search on the machine.
     [Parameter(Mandatory = $true, Position = 0)]
     [ValidateNotNullOrEmpty()]
     [string]$Name,
