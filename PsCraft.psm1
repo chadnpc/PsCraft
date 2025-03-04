@@ -232,6 +232,13 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     }
     return $ae
   }
+  static [bool] IsGitRepo([string]$path) {
+    $git_command = 'git rev-parse --is-inside-work-tree'
+    if ([string]::IsNullOrWhiteSpace($path)) {
+      return [bool]([ScriptBlock]::Create("$git_command 2>`$null").Invoke())
+    }
+    return [bool]([ScriptBlock]::Create("pushd $path; $git_command 2>`$null; popd").Invoke())
+  }
   static [string] GetRelativePath([string]$RelativeTo, [string]$Path) {
     # $RelativeTo : The source path the result should be relative to. This path is always considered to be a directory.
     # $Path : The destination path.
@@ -560,7 +567,7 @@ class PsModuleData {
       Description           = "A longer description of the Module, its purpose, common use cases, etc."
       CompanyName           = $AuthorEmail.Split('@')[0]
       AuthorEmail           = $AuthorEmail
-      ModuleVersion         = [version]::new(0, 1, 0)
+      ModuleVersion         = '0.1.0'
       RequiredModules       = @(
         "PSScriptAnalyzer"
       )
@@ -570,7 +577,7 @@ class PsModuleData {
       Builder               = {
         #!/usr/bin/env pwsh
         # .SYNOPSIS
-        #   <ModuleName> buildScript v0.<ModuleVersion>
+        #   <ModuleName> buildScript v<ModuleVersion>
         # .DESCRIPTION
         #   A custom build script for the module <ModuleName>
         # .LINK
@@ -647,10 +654,10 @@ class PsModuleData {
       Tester                = {
         #!/usr/bin/env pwsh
         # .SYNOPSIS
-        #   <ModuleName> testScript v0.<ModuleVersion>
+        #   <ModuleName> testScript v<ModuleVersion>
         # .EXAMPLE
-        #   ./Test-Module.ps1 -version 0.<ModuleVersion>
-        #   Will test the module in ./BuildOutput/<ModuleName>/0.<ModuleVersion>/
+        #   ./Test-Module.ps1 -version <ModuleVersion>
+        #   Will test the module in ./BuildOutput/<ModuleName>/<ModuleVersion>/
         # .EXAMPLE
         #   ./Test-Module.ps1
         #   Will test the latest  module version in ./BuildOutput/<ModuleName>/
@@ -974,7 +981,7 @@ class PsModuleData {
       Publishyaml           = [PsModule]::GetModulePublishyaml()
       CICDyaml              = [PsModule]::GetModuleCICDyaml()
       Tags                  = [string[]]("PowerShell", [Environment]::UserName)
-      ReleaseNotes          = "# Release Notes`n`n- Version_0.<ModuleVersion>`n- Functions ...`n- Optimizations`n"
+      ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Functions ...`n- Optimizations`n"
       ProcessorArchitecture = 'None'
       #CompatiblePSEditions = $($Ps_Ed = (Get-Variable 'PSVersionTable').Value.PSEdition; if ([string]::IsNullOrWhiteSpace($Ps_Ed)) { 'Desktop' } else { $Ps_Ed }) # skiped on purpose. <<< https://blog.netnerds.net/2023/03/dont-waste-your-time-with-core-versions
     }

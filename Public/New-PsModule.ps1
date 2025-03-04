@@ -40,7 +40,7 @@
     [Parameter(Mandatory = $false, ParameterSetName = 'ByName')]
     [PSDefaultValue(Help = "1.0 (when -Upgrade is set, increments the existing value to the nearest major version number)")]
     [Alias("Version", "MV")][Version]
-    ${ModuleVersion} = "1.0",
+    ${ModuleVersion} = "0.1.0",
 
     [Parameter(Mandatory = $false, ParameterSetName = 'ByName')]
     [AllowEmptyString()][String]
