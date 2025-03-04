@@ -741,7 +741,7 @@ class PsModuleData {
       LocalData             = {
         @{
           ModuleName    = '<ModuleName>'
-          ModuleVersion = '0.<ModuleVersion>'
+          ModuleVersion = '0.1.0'
           ReleaseNotes  = '<ReleaseNotes>'
         }
       }
