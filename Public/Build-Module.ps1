@@ -444,7 +444,7 @@
     foreach ($name in $build_requirements) {
       try {
         if ($IsConnected) {
-          [void][ThreadRunner]::Run(" [+] Install-Module -Name $name", { param([string]$N) Install-Module -Name $N -Verbose:$false -ea Stop }, ($name))
+          Wait-Task -ProgressMsg " [+] Install-Module -Name $name" -ScriptBlock { param([string]$n) Install-Module -Name $n -Verbose:$false -ea Stop } -ArgumentList @($name)
         } elseif ($InstalledModules -contains $name) {
           Write-Host " [+] Module $name$(' '* $($L - $name.Length))was already installed" -f Green
         } else {
