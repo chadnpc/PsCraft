@@ -437,6 +437,9 @@
     }
     #endregion packagefeed
     #region    buildrequirements
+    $core = "cliHelper.core"; if ($null -eq (Get-Module -ListAvailable $core -Verbose:$false -ea Ignore)) {
+      Install-Module -Name $core -Verbose:$false -ea Stop; Import-Module -Name $core -Verbose:$false
+    }
     Write-Host "Resolve build requirements: [$($build_requirements -join ', ')]" -f Green
     $IsGithubRun = ![string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable('GITHUB_WORKFLOW'))
     $IsConnected = $IsGithubRun ? $true : $(Test-NetworkConnectivity); $InstalledModules = $(if (!$IsConnected) { (Get-Module -Verbose:$false) + (Get-InstalledModule -Verbose:$false) | Select-Object -Unique -ExpandProperty Name } else { @() })
