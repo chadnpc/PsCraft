@@ -238,7 +238,9 @@
             $Env:PSModulePath = ($outputDir + $pathSeperator + $origModulePath)
           }
           Remove-Module $ProjectName -ea SilentlyContinue -Verbose:$false
-          Import-Module $outputModDir -Force -Verbose:$false
+          if ([bool]([ScriptBlock]::Create('git rev-parse --is-inside-work-tree 2>$null').Invoke())) {
+            Import-Module $outputModDir -Force -Verbose:$false
+          }
           $Host.UI.WriteLine();
           $TestResults = & $test_Script
           Write-Host '    Pester invocation complete!' -ForegroundColor Green
