@@ -5,14 +5,8 @@
   <p>
     A toolbox to accelerate common tasks involved in <b>developing and sharing PowerShell code</b>.
     </br></br>
-    <a href="https://github.com/chadnpc/PsCraft/actions/workflows/Build_on_windows.yaml">
-    <img src="https://github.com/chadnpc/PsCraft/actions/workflows/Build_on_windows.yaml/badge.svg" alt="Build on Windows"/>
-    </a>
-    <a href="https://github.com/chadnpc/PsCraft/actions/workflows/Build_on_Mac.yaml">
-    <img src="https://github.com/chadnpc/PsCraft/actions/workflows/Build_on_Mac.yaml/badge.svg" alt="Build on MacOS"/>
-    </a>
-    <a href="https://github.com/chadnpc/PsCraft/actions/workflows/Build_on_Linux.yaml">
-    <img src="https://github.com/chadnpc/PsCraft/actions/workflows/Build_on_Linux.yaml/badge.svg" alt="Build on Linux"/>
+    <a href="https://github.com/chadnpc/PsCraft/actions/workflows/build_module.yaml">
+    <img src="https://github.com/chadnpc/PsCraft/actions/workflows/build_module.yaml/badge.svg" alt="Build Module" title="badge" />
     </a>
     <a href="https://www.powershellgallery.com/packages/PsCraft">
     <img src="https://img.shields.io/powershellgallery/dt/PsCraft.svg?style=flat&logo=powershell&color=blue" alt="PowerShell Gallery" title="PowerShell Gallery" />
@@ -38,7 +32,14 @@ https://github.com/user-attachments/assets/d18cbf73-0426-4f05-b965-2b056d06311e
 Its one comand!
 
 ```PowerShell
-$module = New-PsModule -Name testmodule123
+$module = New-PsModule -Name testmodule123 -description "a test module"
+```
+
+```PowerShell
+cd testmodule123
+code .
+# do edits, then
+./build.ps1
 ```
 
 </li>
@@ -65,7 +66,7 @@ If this tool saves your time and you want to support me;
 </a>
 -->
 
-[You can also share ideas, and provide feedback](https://github.com/chadnpc/PsCraft/discussions/2).
+[+idea? -or +feedback?](https://github.com/chadnpc/PsCraft/discussions/).
 
 <!-- [![Contributors](https://contrib.rocks/image?repo=chadnpc/PsCraft)](https://github.com/chadnpc/PsCraft/graphs/contributors) -->
 
