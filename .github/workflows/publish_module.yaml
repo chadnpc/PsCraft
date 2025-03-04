@@ -1,4 +1,4 @@
-name: GitHub release and Publish
+﻿name: GitHub release and Publish
 on: [workflow_dispatch]
 defaults:
   run:
@@ -20,7 +20,7 @@ jobs:
     if: ${{ always() }}
   publish-to-gallery:
     name: Publish to PowerShell Gallery
-    runs-on: macOS-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Publish

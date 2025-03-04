@@ -570,7 +570,7 @@ class PsModuleData {
       Builder               = {
         #!/usr/bin/env pwsh
         # .SYNOPSIS
-        #   <ModuleName> buildScript v<ModuleVersion>
+        #   <ModuleName> buildScript v0.<ModuleVersion>
         # .DESCRIPTION
         #   A custom build script for the module <ModuleName>
         # .LINK
@@ -647,10 +647,10 @@ class PsModuleData {
       Tester                = {
         #!/usr/bin/env pwsh
         # .SYNOPSIS
-        #   <ModuleName> testScript v<ModuleVersion>
+        #   <ModuleName> testScript v0.<ModuleVersion>
         # .EXAMPLE
-        #   ./Test-Module.ps1 -version <ModuleVersion>
-        #   Will test the module in ./BuildOutput/<ModuleName>/<ModuleVersion>/
+        #   ./Test-Module.ps1 -version 0.<ModuleVersion>
+        #   Will test the module in ./BuildOutput/<ModuleName>/0.<ModuleVersion>/
         # .EXAMPLE
         #   ./Test-Module.ps1
         #   Will test the latest  module version in ./BuildOutput/<ModuleName>/
@@ -741,19 +741,25 @@ class PsModuleData {
       LocalData             = {
         @{
           ModuleName    = '<ModuleName>'
-          ModuleVersion = [version]'<ModuleVersion>'
+          ModuleVersion = [version]'0.<ModuleVersion>'
           ReleaseNotes  = '<ReleaseNotes>'
         }
       }
-      LicenseUri            = "https://alain.MIT-license.org"
+      LicenseUri            = "https://$AuthorName.MIT-license.org"
       ProjectUri            = "https://github.com/$AuthorName/$Name"
       IconUri               = 'https://github.com/user-attachments/assets/1220c30e-a309-43c3-9a80-1948dae30e09'
       rootLoader            = {
         #!/usr/bin/env pwsh
         #region    Classes
+        # Main class
+        #class $ModuleName {
+        ## Define the class. Try constructors, properties, or methods.
+        #}
         #endregion Classes
         # Types that will be available to users when they import the module.
-        $typestoExport = @()
+        $typestoExport = @(
+          #[$ModuleName]
+        )
         $TypeAcceleratorsClass = [PsObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')
         foreach ($Type in $typestoExport) {
           if ($Type.FullName -in $TypeAcceleratorsClass::Get.Keys) {
@@ -761,13 +767,7 @@ class PsModuleData {
               "Unable to register type accelerator '$($Type.FullName)'"
               'Accelerator already exists.'
             ) -join ' - '
-
-            [System.Management.Automation.ErrorRecord]::new(
-              [System.InvalidOperationException]::new($Message),
-              'TypeAcceleratorAlreadyExists',
-              [System.Management.Automation.ErrorCategory]::InvalidOperation,
-              $Type.FullName
-            ) | Write-Warning
+            "TypeAcceleratorAlreadyExists $Message" | Write-Debug
           }
         }
         # Add type accelerators for every exportable type.
@@ -974,7 +974,7 @@ class PsModuleData {
       Publishyaml           = [PsModule]::GetModulePublishyaml()
       CICDyaml              = [PsModule]::GetModuleCICDyaml()
       Tags                  = [string[]]("PowerShell", [Environment]::UserName)
-      ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Functions ...`n- Optimizations`n"
+      ReleaseNotes          = "# Release Notes`n`n- Version_0.<ModuleVersion>`n- Functions ...`n- Optimizations`n"
       ProcessorArchitecture = 'None'
       #CompatiblePSEditions = $($Ps_Ed = (Get-Variable 'PSVersionTable').Value.PSEdition; if ([string]::IsNullOrWhiteSpace($Ps_Ed)) { 'Desktop' } else { $Ps_Ed }) # skiped on purpose. <<< https://blog.netnerds.net/2023/03/dont-waste-your-time-with-core-versions
     }
@@ -1140,10 +1140,10 @@ class PsModule {
       FeatureTest      = [Path]::Combine($mtest, "$mName.Features.Tests.ps1")
       ScriptAnalyzer   = [Path]::Combine($mroot, "PSScriptAnalyzerSettings.psd1")
       IntegrationTest  = [Path]::Combine($mtest, "$mName.Integration.Tests.ps1")
-      DelWorkflowsyaml = [Path]::Combine($workflows, 'Delete_old_workflow_runs.yaml')
-      Codereviewyaml   = [Path]::Combine($workflows, 'Codereview.yaml')
-      Publishyaml      = [Path]::Combine($workflows, 'Publish.yaml')
-      CICDyaml         = [Path]::Combine($workflows, 'CI.yaml')
+      DelWorkflowsyaml = [Path]::Combine($workflows, 'delete_old_workflow_runs.yaml')
+      Codereviewyaml   = [Path]::Combine($workflows, 'codereview.yaml')
+      Publishyaml      = [Path]::Combine($workflows, 'publish.yaml')
+      CICDyaml         = [Path]::Combine($workflows, 'build_module.yaml')
       # Add more here
     };
     $fl.Keys.ForEach({ $o.Value.Files += [ModuleFile]::new($_, $fl[$_]) })
@@ -1272,7 +1272,7 @@ class PsModule {
     return [Encoding]::UTF8.GetString([Convert]::FromBase64String("CiMgWzxNb2R1bGVOYW1lPl0oaHR0cHM6Ly93d3cucG93ZXJzaGVsbGdhbGxlcnkuY29tL3BhY2thZ2VzLzxNb2R1bGVOYW1lPikKCvCflKUgQmxhemluZ2x5IGZhc3QgUG93ZXJTaGVsbCB0aGluZ3kgdGhhdCBzdG9ua3MgdXAgeW91ciB0ZXJtaW5hbCBnYW1lLgoKIyMgVXNhZ2UKCmBgYFBvd2VyU2hlbGwKSW5zdGFsbC1Nb2R1bGUgPE1vZHVsZU5hbWU+CmBgYAoKdGhlbgoKYGBgUG93ZXJTaGVsbApJbXBvcnQtTW9kdWxlIDxNb2R1bGVOYW1lPgojIGRvIHN0dWZmIGhlcmUuCmBgYAoKIyMgTGljZW5zZQoKVGhpcyBwcm9qZWN0IGlzIGxpY2Vuc2VkIHVuZGVyIHRoZSBbV1RGUEwgTGljZW5zZV0oTElDRU5TRSku"));
   }
   static [string] GetModuleCICDyaml() {
-    return [Encoding]::UTF8.GetString([Convert]::FromBase64String("bmFtZTogQ0kKb246IFtwdXNoLCBwdWxsX3JlcXVlc3QsIHdvcmtmbG93X2Rpc3BhdGNoXQpkZWZhdWx0czoKICBydW46CiAgICBzaGVsbDogcHdzaAoKam9iczoKICBidWlsZDoKICAgIG5hbWU6IFJ1bnMgb24gYWxsIHBsYXRmb3JtcwogICAgcnVucy1vbjogJHt7IG1hdHJpeC5vcyB9fQogICAgc3RyYXRlZ3k6CiAgICAgIGZhaWwtZmFzdDogZmFsc2UKICAgICAgbWF0cml4OgogICAgICAgIG9zOiBbdWJ1bnR1LWxhdGVzdCwgd2luZG93cy1sYXRlc3QsIG1hY09TLWxhdGVzdF0KICAgIHN0ZXBzOgogICAgICAtIHVzZXM6IGFjdGlvbnMvY2hlY2tvdXRAdjMKICAgICAgLSBuYW1lOiBCdWlsZAogICAgICAgIHJ1bjogLi9idWlsZC5wczEgLVRhc2sgVGVzdA=="));
+    return [Encoding]::UTF8.GetString([Convert]::FromBase64String("77u/bmFtZTogQnVpbGQgTW9kdWxlCm9uOiBbd29ya2Zsb3dfZGlzcGF0Y2hdCmRlZmF1bHRzOgogIHJ1bjoKICAgIHNoZWxsOiBwd3NoCgpqb2JzOgogIGJ1aWxkOgogICAgbmFtZTogUnVucyBvbgogICAgcnVucy1vbjogJHt7IG1hdHJpeC5vcyB9fQogICAgc3RyYXRlZ3k6CiAgICAgIGZhaWwtZmFzdDogZmFsc2UKICAgICAgbWF0cml4OgogICAgICAgIG9zOiBbd2luZG93cy1sYXRlc3QsIG1hY09TLWxhdGVzdF0KICAgIHN0ZXBzOgogICAgICAtIHVzZXM6IGFjdGlvbnMvY2hlY2tvdXRAdjMKICAgICAgLSBuYW1lOiBCdWlsZAogICAgICAgIHJ1bjogLi9idWlsZC5wczEgLVRhc2sgVGVzdA=="));
   }
   static [string] GetModuleCodereviewyaml() {
     return [Encoding]::UTF8.GetString([Convert]::FromBase64String("bmFtZTogQ29kZSBSZXZpZXcKcGVybWlzc2lvbnM6CiAgY29udGVudHM6IHJlYWQKICBwdWxsLXJlcXVlc3RzOiB3cml0ZQoKb246CiAgcHVsbF9yZXF1ZXN0OgogICAgdHlwZXM6IFtvcGVuZWQsIHJlb3BlbmVkLCBzeW5jaHJvbml6ZV0KCmpvYnM6CiAgdGVzdDoKICAgIHJ1bnMtb246IHVidW50dS1sYXRlc3QKICAgIHN0ZXBzOgogICAgICAtIHVzZXM6IGFuYzk1L0NoYXRHUFQtQ29kZVJldmlld0B2MS4wLjEyCiAgICAgICAgZW52OgogICAgICAgICAgR0lUSFVCX1RPS0VOOiAke3sgc2VjcmV0cy5HSVRIVUJfVE9LRU4gfX0KICAgICAgICAgIE9QRU5BSV9BUElfS0VZOiAke3sgc2VjcmV0cy5PUEVOQUlfQVBJX0tFWSB9fQogICAgICAgICAgTEFOR1VBR0U6IEVuZ2xpc2gKICAgICAgICAgIE9QRU5BSV9BUElfRU5EUE9JTlQ6IGh0dHBzOi8vYXBpLm9wZW5haS5jb20vdjEKICAgICAgICAgIE1PREVMOiBncHQtNG8gIyBodHRwczovL3BsYXRmb3JtLm9wZW5haS5jb20vZG9jcy9tb2RlbHMKICAgICAgICAgIFBST01QVDogUGxlYXNlIGNoZWNrIGlmIHRoZXJlIGFyZSBhbnkgY29uZnVzaW9ucyBvciBpcnJlZ3VsYXJpdGllcyBpbiB0aGUgZm9sbG93aW5nIGNvZGUgZGlmZgogICAgICAgICAgdG9wX3A6IDEKICAgICAgICAgIHRlbXBlcmF0dXJlOiAxCiAgICAgICAgICBtYXhfdG9rZW5zOiAxMDAwMAogICAgICAgICAgTUFYX1BBVENIX0xFTkdUSDogMTAwMDAgIyBpZiB0aGUgcGF0Y2gvZGlmZiBsZW5ndGggaXMgbGFyZ2UgdGhhbiBNQVhfUEFUQ0hfTEVOR1RILCB3aWxsIGJlIGlnbm9yZWQgYW5kIHdvbid0IHJldmlldy4="));
