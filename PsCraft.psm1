@@ -979,8 +979,10 @@ class PsModuleData {
       DelWorkflowsyaml      = [PsModule]::GetModuleDelWorkflowsyaml()
       Codereviewyaml        = [PsModule]::GetModuleCodereviewyaml()
       Publishyaml           = [PsModule]::GetModulePublishyaml()
+      GitIgnore             = ".env`n.env.local`nBuildOutput/`nLocalPSRepo/`nTests/results.xml`nTests/Resources/"
       CICDyaml              = [PsModule]::GetModuleCICDyaml()
-      Tags                  = [string[]]("PowerShell", [Environment]::UserName)
+      DotEnv                = "#usage example: Publish-Module -Path BuildOutput/cliHelper.xconvert/0.1.3 -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
+      Tags                  = [string[]]("PowerShell", $Name, [Environment]::UserName)
       ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Functions ...`n- Optimizations`n"
       ProcessorArchitecture = 'None'
       #CompatiblePSEditions = $($Ps_Ed = (Get-Variable 'PSVersionTable').Value.PSEdition; if ([string]::IsNullOrWhiteSpace($Ps_Ed)) { 'Desktop' } else { $Ps_Ed }) # skiped on purpose. <<< https://blog.netnerds.net/2023/03/dont-waste-your-time-with-core-versions
@@ -1150,7 +1152,9 @@ class PsModule {
       DelWorkflowsyaml = [Path]::Combine($workflows, 'delete_old_workflow_runs.yaml')
       Codereviewyaml   = [Path]::Combine($workflows, 'codereview.yaml')
       Publishyaml      = [Path]::Combine($workflows, 'publish.yaml')
+      GitIgnore        = [Path]::Combine($mroot, ".gitignore")
       CICDyaml         = [Path]::Combine($workflows, 'build_module.yaml')
+      DotEnv           = [Path]::Combine($mroot, ".env")
       # Add more here
     };
     $fl.Keys.ForEach({ $o.Value.Files += [ModuleFile]::new($_, $fl[$_]) })
@@ -1276,7 +1280,7 @@ class PsModule {
     return [PsModuleData]::LICENSE_TXT
   }
   static [string] GetModuleReadmeText() {
-    return [Encoding]::UTF8.GetString([Convert]::FromBase64String("CiMgWzxNb2R1bGVOYW1lPl0oaHR0cHM6Ly93d3cucG93ZXJzaGVsbGdhbGxlcnkuY29tL3BhY2thZ2VzLzxNb2R1bGVOYW1lPikKCvCflKUgQmxhemluZ2x5IGZhc3QgUG93ZXJTaGVsbCB0aGluZ3kgdGhhdCBzdG9ua3MgdXAgeW91ciB0ZXJtaW5hbCBnYW1lLgoKIyMgVXNhZ2UKCmBgYFBvd2VyU2hlbGwKSW5zdGFsbC1Nb2R1bGUgPE1vZHVsZU5hbWU+CmBgYAoKdGhlbgoKYGBgUG93ZXJTaGVsbApJbXBvcnQtTW9kdWxlIDxNb2R1bGVOYW1lPgojIGRvIHN0dWZmIGhlcmUuCmBgYAoKIyMgTGljZW5zZQoKVGhpcyBwcm9qZWN0IGlzIGxpY2Vuc2VkIHVuZGVyIHRoZSBbV1RGUEwgTGljZW5zZV0oTElDRU5TRSku"));
+    return [Encoding]::UTF8.GetString([Convert]::FromBase64String("CiMgWzxNb2R1bGVOYW1lPl0oaHR0cHM6Ly93d3cucG93ZXJzaGVsbGdhbGxlcnkuY29tL3BhY2thZ2VzLzxNb2R1bGVOYW1lPikKCvCflKUgQmxhemluZ2x5IGZhc3QgUG93ZXJTaGVsbCB0aGluZ3kgdGhhdCBzdG9ua3MgdXAgeW91ciB0ZXJtaW5hbCBnYW1lLgoKWyFbQnVpbGQgTW9kdWxlXShodHRwczovL2dpdGh1Yi5jb20vY2hhZG5wYy88TW9kdWxlTmFtZT4vYWN0aW9ucy93b3JrZmxvd3MvYnVpbGRfbW9kdWxlLnlhbWwvYmFkZ2Uuc3ZnKV0oaHR0cHM6Ly9naXRodWIuY29tL2NoYWRucGMvPE1vZHVsZU5hbWU+L2FjdGlvbnMvd29ya2Zsb3dzL2J1aWxkX21vZHVsZS55YW1sKQpbIVtEb3dubG9hZHNdKGh0dHBzOi8vaW1nLnNoaWVsZHMuaW8vcG93ZXJzaGVsbGdhbGxlcnkvZHQvPE1vZHVsZU5hbWU+LnN2Zz9zdHlsZT1mbGF0JmxvZ289cG93ZXJzaGVsbCZjb2xvcj1ibHVlKV0oaHR0cHM6Ly93d3cucG93ZXJzaGVsbGdhbGxlcnkuY29tL3BhY2thZ2VzLzxNb2R1bGVOYW1lPikKCiMjIFVzYWdlCgpgYGBQb3dlclNoZWxsCkluc3RhbGwtTW9kdWxlIDxNb2R1bGVOYW1lPgpgYGAKCnRoZW4KCmBgYFBvd2VyU2hlbGwKSW1wb3J0LU1vZHVsZSA8TW9kdWxlTmFtZT4KIyBkbyBzdHVmZiBoZXJlLgpgYGAKCiMjIExpY2Vuc2UKClRoaXMgcHJvamVjdCBpcyBsaWNlbnNlZCB1bmRlciB0aGUgW1dURlBMIExpY2Vuc2VdKExJQ0VOU0UpLgo="));
   }
   static [string] GetModuleCICDyaml() {
     return [Encoding]::UTF8.GetString([Convert]::FromBase64String("77u/bmFtZTogQnVpbGQgTW9kdWxlCm9uOiBbd29ya2Zsb3dfZGlzcGF0Y2hdCmRlZmF1bHRzOgogIHJ1bjoKICAgIHNoZWxsOiBwd3NoCgpqb2JzOgogIGJ1aWxkOgogICAgbmFtZTogUnVucyBvbgogICAgcnVucy1vbjogJHt7IG1hdHJpeC5vcyB9fQogICAgc3RyYXRlZ3k6CiAgICAgIGZhaWwtZmFzdDogZmFsc2UKICAgICAgbWF0cml4OgogICAgICAgIG9zOiBbd2luZG93cy1sYXRlc3QsIG1hY09TLWxhdGVzdF0KICAgIHN0ZXBzOgogICAgICAtIHVzZXM6IGFjdGlvbnMvY2hlY2tvdXRAdjMKICAgICAgLSBuYW1lOiBCdWlsZAogICAgICAgIHJ1bjogLi9idWlsZC5wczEgLVRhc2sgVGVzdA=="));
