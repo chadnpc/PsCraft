@@ -51,6 +51,10 @@ New-PsModule -Name MyModule
 
 ![Image](https://github.com/user-attachments/assets/bbc1e8d7-8a0f-410a-8196-cadab1821ae9)
 
+**Example:**
+
+https://github.com/user-attachments/assets/d18cbf73-0426-4f05-b965-2b056d06311e
+
 ## Additional Features
 
 ### Script Signing

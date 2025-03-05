@@ -27,7 +27,7 @@ Install-Module PsCraft
 <li>Create, test, build and deploy 🚀 a module really fast.</br>
   <p>⤷ <b>Ex</b>: You can create a <a href="https://learn.microsoft.com/en-us/powershell/scripting/developer/module/how-to-write-a-powershell-script-module">script module</a> in under 5 seconds!</p>
 
-https://github.com/user-attachments/assets/d18cbf73-0426-4f05-b965-2b056d06311e
+https://github.com/user-attachments/assets/c627ae68-fb70-44e2-9362-efa198aa7a8a
 
 Its one comand!
 
