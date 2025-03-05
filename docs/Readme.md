@@ -53,7 +53,7 @@ New-PsModule -Name MyModule
 
 **Example:**
 
-https://github.com/user-attachments/assets/d18cbf73-0426-4f05-b965-2b056d06311e
+https://github.com/user-attachments/assets/46a1b8d4-8e83-4194-a092-2244d7ef833e
 
 ## Additional Features
 
