@@ -1,28 +1,28 @@
 ﻿
 @{
-  ModuleName        = 'PsCraft'
-  ModuleVersion     = [version]'0.3.0'
-  ReleaseNotes      = "# Release Notes`n`n- Patches (Build script)`n- Optimizations`n"
-  DefaultModuleData = @{
+  ModuleName          = 'PsCraft'
+  ModuleVersion       = [version]'0.3.0'
+  ReleaseNotes        = "# Release Notes`n`n- Patches (Build script)`n- Optimizations`n"
+  DefaultModuleData   = @{
     Path                  = [Path]::Combine($Path, $Path.Split([Path]::DirectorySeparatorChar)[-1] + ".psd1")
     Guid                  = [guid]::NewGuid()
     Year                  = [datetime]::Now.Year
-    Author                = [PsModuleData]::GetAuthorName()
-    UserName              = [PsModuleData]::GetAuthorEmail().Split('@')[0]
-    Copyright             = $("Copyright {0} {1} {2}. All rights reserved." -f [string][char]169, [datetime]::Now.Year, [PsModuleData]::GetAuthorName());
+    Author                = [PsModuleData]::GetAuthorName('')
+    UserName              = [PsModuleData]::GetAuthorEmail('').Split('@')[0]
+    Copyright             = $("Copyright {0} {1} {2}. All rights reserved." -f [string][char]169, [datetime]::Now.Year, [PsModuleData]::GetAuthorName(''));
     RootModule            = $Name + '.psm1'
     ClrVersion            = [string]::Join('.', (Get-Variable 'PSVersionTable' -ValueOnly).SerializationVersion.ToString().split('.')[0..2])
     ModuleName            = $Name
     Description           = "A longer description of the Module, its purpose, common use cases, etc."
-    CompanyName           = [PsModuleData]::GetAuthorEmail().Split('@')[0]
-    AuthorEmail           = [PsModuleData]::GetAuthorEmail()
+    CompanyName           = [PsModuleData]::GetAuthorEmail('').Split('@')[0]
+    AuthorEmail           = [PsModuleData]::GetAuthorEmail('')
     ModuleVersion         = '0.1.0'
     RequiredModules       = @(
       "PsModuleBase"
     )
     PowerShellVersion     = [version][string]::Join('', (Get-Variable 'PSVersionTable').Value.PSVersion.Major.ToString(), '.0')
-    Readme                = [PsModuleData]::GetModuleReadmeText()
-    License               = [PsModuleData]::LICENSE_TXT ? [PsModuleData]::LICENSE_TXT : [PsModuleData]::GetModuleLicenseText()
+    Readme                = [PsModuleData]::GetModuleReadmeText('')
+    License               = [PsModuleData]::LICENSE_TXT ? [PsModuleData]::LICENSE_TXT : [PsModuleData]::GetModuleLicenseText('')
     Builder               = {
       #!/usr/bin/env pwsh
       # .SYNOPSIS
@@ -201,7 +201,7 @@
         ReleaseNotes  = '<ReleaseNotes>'
       }
     }
-    LicenseUri            = "https://$([PsModuleData]::GetAuthorName()).MIT-license.org"
+    LicenseUri            = "https://$([PsModuleData]::GetAuthorName('')).MIT-license.org"
     ProjectUri            = "https://github.com/chadnpc/$Name"
     IconUri               = 'https://github.com/user-attachments/assets/1220c30e-a309-43c3-9a80-1948dae30e09'
     rootLoader            = {
@@ -434,9 +434,9 @@
         }
       }
     }
-    DelWorkflowsyaml      = [PsModuleData]::GetModuleDelWorkflowsyaml()
-    Codereviewyaml        = [PsModuleData]::GetModuleCodereviewyaml()
-    Publishyaml           = [PsModuleData]::GetModulePublishyaml()
+    DelWorkflowsyaml      = [PsModuleData]::GetModuleDelWorkflowsyaml('')
+    Codereviewyaml        = [PsModuleData]::GetModuleCodereviewyaml('')
+    Publishyaml           = [PsModuleData]::GetModulePublishyaml('')
     GitIgnore             = ".env`n.env.local`nBuildOutput/`nLocalPSRepo/`nTests/results.xml`nTests/Resources/"
     CICDyaml              = [PsModuleData]::GetModuleCICDyaml()
     DotEnv                = "#usage example: Publish-Module -Path BuildOutput/cliHelper.xconvert/0.1.3 -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
@@ -444,5 +444,37 @@
     ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Functions ...`n- Optimizations`n"
     ProcessorArchitecture = 'None'
     #CompatiblePSEditions = $($Ps_Ed = (Get-Variable 'PSVersionTable').Value.PSEdition; if ([string]::IsNullOrWhiteSpace($Ps_Ed)) { 'Desktop' } else { $Ps_Ed }) # skiped on purpose. <<< https://blog.netnerds.net/2023/03/dont-waste-your-time-with-core-versions
+  }
+  DefaultModuleSchema = @{
+    Files   = @{
+      Path             = './{mName}.psd1'
+      Tester           = './Test-Module.ps1'
+      Builder          = './build.ps1'
+      License          = './LICENSE'
+      Readme           = './README.md'
+      Manifest         = './{mName}.psd1'
+      LocalData        = "./$((Get-Culture).Name)/{mName}.strings.psd1"
+      rootLoader       = './{mName}.psm1'
+      ScriptAnalyzer   = './PSScriptAnalyzerSettings.psd1'
+      ModuleTest       = './Tests/{mName}.Module.Tests.ps1'
+      FeatureTest      = './Tests/{mName}.Features.Tests.ps1'
+      IntegrationTest  = './Tests/{mName}.Integration.Tests.ps1'
+      DelWorkflowsyaml = './.github/workflows/delete_old_workflow_runs.yaml'
+      Codereviewyaml   = './.github/workflows/codereview.yaml'
+      Publishyaml      = './.github/workflows/publish.yaml'
+      GitIgnore        = './.gitignore'
+      CICDyaml         = './.github/workflows/build_module.yaml'
+      DotEnv           = './.env'
+      # Add more here
+    }
+    Folders = @{
+      root      = './'
+      tests     = './Tests'
+      public    = './Public'
+      private   = './Private'
+      LocalData = "./$((Get-Culture).Name)" # The purpose of this folder is to store localized content for your module, such as help files, error messages, or any other text that needs to be displayed in different languages.
+      workflows = './.github/workflows'
+      # Add more here. you can access them like: $this.Folders.Where({ $_.Name -eq "root" }).value.FullName
+    }
   }
 }
