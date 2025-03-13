@@ -226,34 +226,12 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     $Visitor = [AliasVisitor]::new(); $Ast.Visit($Visitor)
     return $Visitor.Aliases
   }
-  static [void] ValidatePath([string]$path) {
-    $InvalidPathChars = [Path]::GetInvalidPathChars()
-    $InvalidCharsRegex = "[{0}]" -f [regex]::Escape($InvalidPathChars)
-    if ($Path -match $InvalidCharsRegex) {
-      throw [InvalidEnumArgumentException]::new("The path string contains invalid characters.")
-    }
-  }
-  static [bool] IsAdmin() {
-    $HostOs = [ModuleManager]::GetHostOs()
-    $isAdmn = switch ($HostOs) {
-      "Windows" { (New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator); break }
-      "Linux" { (& id -u) -eq 0; break }
-      "MacOSX" { Write-Warning "MacOSX !! idk how to solve this one!"; $false; break }
-      Default {
-        Write-Warning "[ModuleManager]::IsAdmin? : OSPlatform $((Get-Variable 'PSVersionTable' -ValueOnly).Platform) | $HostOs is not yet supported"
-        throw "UNSUPPORTED_OS"
-      }
-    }
-    return $isAdmn
-  }
 }
 
 class PsModule : IDisposable {
   [ValidateNotNullOrEmpty()] [String]$Name;
   [ValidateNotNullOrEmpty()] [IO.DirectoryInfo]$Path;
-  [Collection[PsModuleData]] $Data;
-  [List[ModuleFolder]] $Folders;
-  [List[ModuleFile]] $Files;
+  [PsModuleData] $data;
   static [hashtable] $Config
 
   PsModule() {
@@ -297,7 +275,7 @@ class PsModule : IDisposable {
             Default { $(Resolve-Path .).Path }
           })
       ), $mName)
-    [void][ModuleManager]::validatePath($mroot); $o.Value.Path = $mroot
+    [void][PsModuleBase]::validatePath($mroot); $o.Value.Path = $mroot
     $o.Value.Files = [List[ModuleFile]]::new()
     $o.Value.Folders = [List[ModuleFolder]]::new()
     $mtest = [Path]::Combine($mroot, 'Tests');
@@ -312,7 +290,7 @@ class PsModule : IDisposable {
       # Add more here. you can access them like: $this.Folders.Where({ $_.Name -eq "root" }).value.FullName
     };
     $dr.Keys.ForEach({ $o.Value.Folders += [ModuleFolder]::new($_, $dr[$_]) })
-    $fl = @{
+    @{
       Path             = [Path]::Combine($mroot, "$mName.psd1")
       Tester           = [Path]::Combine($mroot, "Test-Module.ps1")
       Builder          = [Path]::Combine($mroot, "build.ps1")
@@ -332,8 +310,10 @@ class PsModule : IDisposable {
       CICDyaml         = [Path]::Combine($workflows, 'build_module.yaml')
       DotEnv           = [Path]::Combine($mroot, ".env")
       # Add more here
-    };
-    $fl.Keys.ForEach({ $o.Value.Files += [ModuleFile]::new($_, $fl[$_]) })
+    }.GetEnumerator().ForEach({
+        $o.Value.Files += [ModuleFile]::new($_.Name, $_.Value)
+      }
+    )
     $o.Value.Data = [PsModuleData]::Create($o.Value.Name, $o.Value.Path, $o.Value.Files)
     return $o.Value
   }
