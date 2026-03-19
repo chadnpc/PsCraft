@@ -418,6 +418,58 @@
       }
       return $ic
     }
+    function Install-Dotnet {
+      # .SYNOPSIS
+      # Short description
+      # .DESCRIPTION
+      # Long description
+      # .EXAMPLE
+      # Example of how to use this cmdlet
+      # .EXAMPLE
+      # Another example of how to use this cmdlet
+      # .INPUTS
+      # Inputs to this cmdlet (if any)
+      # .OUTPUTS
+      # Output from this cmdlet (if any)
+      # .NOTES
+      # General notes
+      # .COMPONENT
+      # The component this cmdlet belongs to
+      # .ROLE
+      # The role this cmdlet belongs to
+      # .FUNCTIONALITY
+      # The functionality that best describes this cmdlet
+      [CmdletBinding(SupportsShouldProcess = $true)]
+      param (
+        [Parameter()]
+        [TypeName]
+        $ParameterName,
+        [switch]$auto
+      )
+
+      begin {
+        #BeginCodeHere
+        $shouldInstalldotnet = $( if (!(Get-Command dotnet -CommandType Application -ErrorAction Ignore)) { $true } elseif ([string]::IsNullOrWhiteSpace((dotnet --list-sdks)) -or !((dotnet --list-sdks) -match '9\.\d+\.\d+')) { $true } else { $false } )
+      }
+
+      process {
+        if ($pscmdlet.ShouldProcess("Target", "Operation")) {
+          if ($shouldInstalldotnet) {
+            if ($IsWindows) {
+              winget install --id=Microsoft.DotNet.SDK.9 -e
+            }
+          }
+        }
+      }
+
+      end {
+        #EndCodeHere
+      }
+
+      clean {
+        #CleanCodeHere - Added in 7.3 for more information see https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_advanced_methods?view=powershell-7.5#clean
+      }
+    }
   }
   process {
     #region    packagefeed
@@ -460,6 +512,7 @@
     }
     $psds = (Get-Module -Name $build_requirements -ListAvailable -Verbose:$false).Path | Sort-Object -Unique { Split-Path $_ -Leaf }
     $psds | Import-Module -Verbose:$false -ea Stop
+    # Install-Dotnet -auto
     #endregion buildrequirements
     try {
       $Psake_BuildFile = New-Item $([IO.Path]::GetTempFileName().Replace('.tmp', '.ps1'))
