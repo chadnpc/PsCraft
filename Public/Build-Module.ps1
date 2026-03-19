@@ -58,7 +58,7 @@
     [switch]$Help
   )
 
-  Begin {
+  begin {
     #Requires -RunAsAdministrator
     #Requires -Psedition Core
     $script:build_requirements = $($RequiredModules + @(
@@ -299,7 +299,7 @@
                 $majorVers
                 break
               }
-              Default {
+              default {
                 Write-Host -f Green "Module Bumped version: $nextGalVer [PSGallery next version]"
                 $nextGalVer
               }
@@ -419,12 +419,12 @@
       return $ic
     }
   }
-  Process {
+  process {
     #region    packagefeed
     # .DESCRIPTION
     #  This will fix any crazy errors you might have when installing modules:
     $PackageProviders = Get-PackageProvider -ListAvailable -ea Ignore -Verbose:$false
-      ("NuGet", "PowerShellGet") | ForEach-Object {
+    ("NuGet", "PowerShellGet") | ForEach-Object {
       if (!$PackageProviders.Name.Contains($_)) { Install-PackageProvider -Name $_ -Force }
       Get-PackageProvider -Name $_ -ForceBootstrap -Verbose:$false
     }
