@@ -57,7 +57,7 @@ For more usage read the [docs](/docs/Readme.md). they pretty easy!
 
 - Cleaning up repository structure
 - Bug fixes and optimizations
-- Adding free ai (no api key will be required)
+- Adding free [coderabbit](https://www.coderabbit.ai) review (claude code will be required)
 
 
 <p>Use <a href="https://marketplace.visualstudio.com/items?itemName=Gruntfuggly.todo-tree">todo tree</a> to find all of them.</p>
