@@ -34,6 +34,6 @@
   )
 
   process {
-    # return $builder.TestModule()
+    return $builder.TestModule()
   }
 }
