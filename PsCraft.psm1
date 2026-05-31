@@ -12,13 +12,16 @@ using namespace System.Management.Automation.Language
 using module Private\Enums.psm1
 using module Private\Models.psm1
 using module Private\BuildLog.psm1
-using module Private\ModuleManager.psm1
+using module Private\PsCraft.psm1
 
-#region    ModuleManager
+#region    PsCraft
 # .SYNOPSIS
-# ModuleManager Class
+#  PsCraft: the module builder and manager.
 # .EXAMPLE
-# $handler = [ModuleManager]::new("MyModule", "Path/To/MyModule.psm1")
+#  [PsModule]$module = New-PsModule "MyModule"   # Creates a new module named "MyModule" in $pwd
+#  $builder = [PsCraft]::new($module.Path)
+# .EXAMPLE
+# $handler = [PsCraft]::new("MyModule", "Path/To/MyModule.psm1")
 # if ($handler.TestModulePath()) {
 #    $handler.ImportModule()
 #    $functions = $handler.ListExportedFunctions()
@@ -28,7 +31,7 @@ using module Private\ModuleManager.psm1
 #  }
 #  TODO: Add more robust example. (This shit can do way much more.)
 
-class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
+class PsCraft : PsModuleBase, Microsoft.PowerShell.Commands.ModuleCmdletBase {
   [ValidateNotNullOrWhiteSpace()][string]$ModuleName
   [ValidateNotNullOrWhiteSpace()][string]$BuildOutputPath # $RootPath/BouldOutput/$ModuleName
   [ValidateNotNullOrEmpty()][IO.DirectoryInfo]$RootPath # Module Project root
@@ -42,10 +45,10 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
   static [bool]$Useverbose
   [List[string]]$TaskList
 
-  ModuleManager() {}
-  ModuleManager([string]$RootPath) { [void][ModuleManager]::From($RootPath, $this) }
-  static [ModuleManager] Create() { return [ModuleManager]::From((Resolve-Path .).Path, $null) }
-  static [ModuleManager] Create([string]$RootPath) { return [ModuleManager]::From($RootPath, $null) }
+  PsCraft() {}
+  PsCraft([string]$RootPath) { [void][PsCraft]::From($RootPath, $this) }
+  static [PsCraft] Create() { return [PsCraft]::From((Resolve-Path .).Path, $null) }
+  static [PsCraft] Create([string]$RootPath) { return [PsCraft]::From($RootPath, $null) }
 
   [bool] ImportModule([string]$path) {
     try {
@@ -56,6 +59,21 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
       Write-Error "Failed to import module: $_"
       return $false
     }
+  }
+  static [LocalPsModule[]] Search([string]$Name) {
+    [ValidateNotNullOrWhiteSpace()][string]$Name = $Name
+    $res = @(); $AvailModls = Get-Module -ListAvailable -Name $Name -Verbose:$false -ErrorAction Ignore
+    if ($null -ne $AvailModls) {
+      foreach ($m in ($AvailModls.ModuleBase -as [string[]])) {
+        if ($null -eq $m) {
+          $res += [PsCraft]::FindLocalPsModule($Name, 'LocalMachine', $null); continue
+        }
+        if ([IO.Directory]::Exists($m)) {
+          $res += [PsCraft]::FindLocalPsModule($Name, [IO.DirectoryInfo]::New($m))
+        }
+      }
+    }
+    return $res
   }
   static [Net.SecurityProtocolType] GetSecurityProtocol() {
     $p = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
@@ -136,7 +154,7 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
       if ($ret -lt 1 -and $_.ErrorRecord.Exception.Message -eq "Module '$moduleName' was not installed by using Install-Module, so it cannot be updated.") {
         Get-Module $moduleName | Remove-Module -Force -ErrorAction Ignore; $ret++
         # TODO: fIX THIS mess by using: Invoke-RetriableCommand function
-        [ModuleManager]::UpdateModule($moduleName, $Version)
+        [PsCraft]::UpdateModule($moduleName, $Version)
       }
     }
   }
@@ -144,7 +162,7 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     # There are issues with pester 5.4.1 syntax, so I'll keep using -SkipPublisherCheck.
     # https://stackoverflow.com/questions/51508982/pester-sample-script-gets-be-is-not-a-valid-should-operator-on-windows-10-wo
     $IsPester = $moduleName -eq 'Pester'
-    if ($IsPester) { [void][ModuleManager]::RemoveOld($moduleName) }
+    if ($IsPester) { [void][PsCraft]::RemoveOld($moduleName) }
     if ($Version -eq 'latest') {
       Install-Module -Name $moduleName -SkipPublisherCheck:$IsPester
     } else {
@@ -170,13 +188,13 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     }
     return [bool]([ScriptBlock]::Create("pushd $path; $git_command 2>`$null; popd").Invoke())
   }
-  static [ModuleManager] From([string]$RootPath, [ref]$o) {
-    $b = [ModuleManager]::new();
-    [Net.ServicePointManager]::SecurityProtocol = [ModuleManager]::GetSecurityProtocol();
+  static [PsCraft] From([string]$RootPath, [ref]$o) {
+    $b = [PsCraft]::new();
+    [Net.ServicePointManager]::SecurityProtocol = [PsCraft]::GetSecurityProtocol();
     [Environment]::SetEnvironmentVariable('IsAC', $(if (![string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable('GITHUB_WORKFLOW'))) { '1' } else { '0' }), [System.EnvironmentVariableTarget]::Process)
     [Environment]::SetEnvironmentVariable('IsCI', $(if (![string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable('TF_BUILD'))) { '1' } else { '0' }), [System.EnvironmentVariableTarget]::Process)
     [Environment]::SetEnvironmentVariable('RUN_ID', $(if ([bool][int]$env:IsAC -or $env:CI -eq "true") { [Environment]::GetEnvironmentVariable('GITHUB_RUN_ID') }else { [Guid]::NewGuid().Guid.substring(0, 21).replace('-', [string]::Join('', (0..9 | Get-Random -Count 1))) + '_' }), [System.EnvironmentVariableTarget]::Process);
-    [ModuleManager]::Useverbose = (Get-Variable VerbosePreference -ValueOnly -Scope global) -eq "continue"
+    [PsCraft]::Useverbose = (Get-Variable VerbosePreference -ValueOnly -Scope global) -eq "continue"
     $_RootPath = [PsModuleBase]::GetunresolvedPath($RootPath);
     if ([IO.Directory]::Exists($_RootPath)) { $b.RootPath = $_RootPath }else { throw [DirectoryNotFoundException]::new("RootPath $RootPath Not Found") }
     $b.ModuleName = [Path]::GetDirectoryName($_RootPath);
@@ -187,7 +205,7 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     $b.dataFile = [FileInfo]::new([Path]::Combine($b.RootPath, 'en-US', "$($b.RootPath.BaseName).strings.psd1"))
     $b.buildFile = New-Item $([Path]::GetTempFileName().Replace('.tmp', '.ps1'));
     if (!$b.dataFile.Exists) { throw [FileNotFoundException]::new('Unable to find the LocalizedData file.', "$($b.dataFile.BaseName).strings.psd1") }
-    [ModuleManager]::LocalizedData = Read-ModuleData -File $b.dataFile
+    [PsCraft]::LocalizedData = Read-ModuleData -File $b.dataFile
     if ($null -ne $o) {
       $o.value.GetType().GetProperties().ForEach({
           $v = $b.$($_.Name)
@@ -226,8 +244,8 @@ class ModuleManager : Microsoft.PowerShell.Commands.ModuleCmdletBase {
 
 # .SYNOPSIS
 #  BuildOrchestrator — core build logic extracted from Build-Module.ps1.
-#  Inherits ModuleManager for module-discovery utilities.
-class BuildOrchestrator : ModuleManager {
+#  Inherits PsCraft for module-discovery utilities.
+class BuildOrchestrator : PsCraft {
   [string[]]  $TaskList
   [string]    $Path
   [string[]]  $RequiredModules
@@ -401,30 +419,6 @@ class BuildOrchestrator : ModuleManager {
   }
 }
 
-
-# .SYNOPSIS
-#  PsCraft: the module builder and manager.
-# .EXAMPLE
-#  [PsModule]$module = New-PsModule "MyModule"   # Creates a new module named "MyModule" in $pwd
-#  $builder = [PsCraft]::new($module.Path)
-class PsCraft : PsModuleBase, ModuleManager {
-  static [LocalPsModule[]] Search([string]$Name) {
-    [ValidateNotNullOrWhiteSpace()][string]$Name = $Name
-    $res = @(); $AvailModls = Get-Module -ListAvailable -Name $Name -Verbose:$false -ErrorAction Ignore
-    if ($null -ne $AvailModls) {
-      foreach ($m in ($AvailModls.ModuleBase -as [string[]])) {
-        if ($null -eq $m) {
-          $res += [PsCraft]::FindLocalPsModule($Name, 'LocalMachine', $null); continue
-        }
-        if ([IO.Directory]::Exists($m)) {
-          $res += [PsCraft]::FindLocalPsModule($Name, [IO.DirectoryInfo]::New($m))
-        }
-      }
-    }
-    return $res
-  }
-}
-
 $global:OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 
 # Types that will be available to users when they import the module.
@@ -432,7 +426,7 @@ $global:OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = 
 # .\scripts\update_exporatable_types.ps1
 
 $typestoExport = @(
-  [BuildLog], [SaveOptions], [PSEdition], [ModuleItemAttribute], [ParseResult], [AliasVisitor], [PsModuleData], [PsModule], [ModuleManager], [BuildOrchestrator], [PsCraft]
+  [BuildLog], [SaveOptions], [PSEdition], [ModuleItemAttribute], [ParseResult], [AliasVisitor], [PsModuleData], [PsModule], [PsCraft], [BuildOrchestrator], [PsCraft]
 )
 $TypeAcceleratorsClass = [PsObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')
 # Add type accelerators for every exportable type.
