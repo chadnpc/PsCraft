@@ -5,15 +5,16 @@ using namespace System.Collections.Generic
 using namespace System.Collections.ObjectModel
 using namespace System.Management.Automation.Language
 
-#Requires -Modules PsModuleBase, PsCraft
 #Requires -Psedition Core
 
-using module Private\BuildLog.psm1
-using module Private\Enums.psm1
-using module Private\Models.psm1
-using module Private\ModuleManager.psm1
-using module Private\PsModule.psm1
-using module Private\PsModuleData.psm1
+# ── Private submodules — strict topological order (zero circular deps) ─────
+using module Private\Enums.psm1             # Layer 0 : no deps
+using module Private\BuildLog.psm1          # Layer 1 : leaf
+using module Private\Models.psm1            # Layer 1 : leaf
+using module Private\PsModuleData.psm1      # Layer 1 : leaf
+using module Private\ModuleManager.psm1     # Layer 2 : uses Models/Enums types (resolved by root)
+using module Private\PsModule.psm1          # Layer 3 : uses ModuleManager/PsModuleData (resolved by root)
+using module Private\BuildOrchestrator.psm1 # Layer 4 : uses ModuleManager + cliHelper.core types
 
 # .SYNOPSIS
 #  PsCraft: the module builder and manager.
