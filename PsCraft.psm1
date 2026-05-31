@@ -432,7 +432,7 @@ $global:OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = 
 # .\scripts\update_exporatable_types.ps1
 
 $typestoExport = @(
-  [BuildLog], [SaveOptions], [PSEdition], [ModuleItemAttribute], [ParseResult], [AliasVisitor], [ModuleManager], [PsModule], [PsModuleData], [BuildOrchestrator], [PsCraft]
+  [BuildLog], [SaveOptions], [PSEdition], [ModuleItemAttribute], [ParseResult], [AliasVisitor], [PsModuleData], [PsModule], [ModuleManager], [BuildOrchestrator], [PsCraft]
 )
 $TypeAcceleratorsClass = [PsObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')
 # Add type accelerators for every exportable type.
