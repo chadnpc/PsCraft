@@ -1,11 +1,7 @@
-﻿using namespace System.IO
+using namespace System.IO
 using namespace System.Management.Automation
 using namespace System.Collections.Generic
 using namespace System.Collections.ObjectModel
-
-using module .\Enums.psm1
-using module .\PsModuleData.psm1
-using module .\ModuleManager.psm1
 
 class PsModule : IDisposable {
   [ValidateNotNullOrEmpty()] [String]$Name;
