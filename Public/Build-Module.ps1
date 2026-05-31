@@ -59,7 +59,6 @@
   )
 
   begin {
-    #Requires -RunAsAdministrator
     #Requires -Psedition Core
     $script:build_requirements = $($RequiredModules + @(
         "PackageManagement", "PSScriptAnalyzer",
@@ -448,7 +447,6 @@
       )
 
       begin {
-        #BeginCodeHere
         $shouldInstalldotnet = $( if (!(Get-Command dotnet -CommandType Application -ErrorAction Ignore)) { $true } elseif ([string]::IsNullOrWhiteSpace((dotnet --list-sdks)) -or !((dotnet --list-sdks) -match '9\.\d+\.\d+')) { $true } else { $false } )
       }
 
@@ -462,10 +460,6 @@
         }
       }
 
-      end {
-        #EndCodeHere
-      }
-
       clean {
         #CleanCodeHere - Added in 7.3 for more information see https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_functions_advanced_methods?view=powershell-7.5#clean
       }
@@ -476,7 +470,7 @@
     # .DESCRIPTION
     #  This will fix any crazy errors you might have when installing modules:
     $PackageProviders = Get-PackageProvider -ListAvailable -ea Ignore -Verbose:$false
-    ("NuGet", "PowerShellGet") | ForEach-Object {
+    @("NuGet", "PowerShellGet") | ForEach-Object {
       if (!$PackageProviders.Name.Contains($_)) { Install-PackageProvider -Name $_ -Force }
       Get-PackageProvider -Name $_ -ForceBootstrap -Verbose:$false
     }
@@ -536,7 +530,7 @@
         buildFile = $Psake_BuildFile.FullName
         taskList  = $Task
       }
-      Invoke-psake @psakeParams @verbose
+      Invoke-Psake @psakeParams @verbose
     } catch {
       $psake.error_message = $_
       $PSCmdlet.ThrowTerminatingError($_)

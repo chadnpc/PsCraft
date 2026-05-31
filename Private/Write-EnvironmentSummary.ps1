@@ -4,7 +4,7 @@
     [ValidateNotNullOrWhiteSpace()]
     [String]$State
   )
-  Process {
+  process {
     $Host.ui.WriteLine()
     Write-Heading "Build Environment Summary:`n"
     @(

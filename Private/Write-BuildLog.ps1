@@ -20,19 +20,19 @@
     [Alias('x', 'nd', 'n')]
     [Switch]$Clean
   )
-  Begin {
+  begin {
     ($f, $l) = switch ($true) {
       $($PSBoundParameters.ContainsKey('Debug') -and $PSBoundParameters['Debug'] -eq $true) { 'Yellow', '##[debug]   '; break }
       $($PSBoundParameters.ContainsKey('Verbose') -and $PSBoundParameters['Verbose'] -eq $true) { $(if ($Host.UI.RawUI.ForegroundColor -eq 'Gray') { 'White' } else { 'Gray' }), '##[Verbose] '; break }
       $Severe { 'Red', '##[Error]   '; break }
       $Warning { 'Yellow', '##[Warning] '; break }
       $Cmd { 'Magenta', '##[Command] '; break }
-      Default {
+      default {
         $(if ($Host.UI.RawUI.ForegroundColor -eq 'Gray') { 'White' } else { 'Gray' }), '##[Info]    '
       }
     }
   }
-  Process {
+  process {
     $fmtMsg = if ($Clean) {
       $Message -split "[\r\n]" | Where-Object { $_ } | ForEach-Object {
         $l + $_

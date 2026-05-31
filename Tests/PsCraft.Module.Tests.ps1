@@ -49,9 +49,9 @@ Describe "Module tests for $($([Environment]::GetEnvironmentVariable($env:RUN_ID
     }
 
     It "The number of missing functions should be 0 " {
-      If ($ExportedFunctions.count -ne $PS1Functions.count) {
+      if ($ExportedFunctions.count -ne $PS1Functions.count) {
         $Compare = Compare-Object -ReferenceObject $ExportedFunctions -DifferenceObject $PS1Functions.Basename
-        $($Compare.InputObject -Join '').Trim() | Should -BeNullOrEmpty
+        $($Compare.InputObject -join '').Trim() | Should -BeNullOrEmpty
       }
     }
   }

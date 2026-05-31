@@ -30,7 +30,7 @@
     $Data
   )
 
-  Process {
+  process {
     if (![IO.Directory]::Exists($Path)) { [string]$Path = Resolve-Path $Path -ea Stop }
     if (!$PSBoundParameters.ContainsKey("Data")) { $Data = Read-ModuleData -Path $Path }; $Version = $Data.ModuleVersion
     if ($null -eq $Version) { throw [System.ArgumentNullException]::new('version', "Please make sure localizedData.ModuleVersion is not null.") }
