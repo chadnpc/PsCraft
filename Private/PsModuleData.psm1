@@ -6,9 +6,9 @@ using namespace System.Management.Automation.Language
 class PsModuleData : Dictionary[string, Object] {
   [ValidateNotNullOrWhiteSpace()][string]$Name
   [ValidateNotNullOrEmpty()][IO.DirectoryInfo]$Path
-  [ReadOnlyCollection[ModuleFile]]$Files;
-  [ReadOnlyCollection[ModuleFolder]]$Folders;
-  static [hashtable]$ModuleSchema = (Read-ModuleData PsModuleBase DefaultModuleSchema);
+  [ReadOnlyCollection[ModuleFile]]$Files
+  [ReadOnlyCollection[ModuleFolder]]$Folders
+  static [hashtable]$ModuleSchema = (Read-ModuleData PsModuleBase DefaultModuleSchema)
 
   PsModuleData() {}
   # PsModuleData([hashtable]$data) {}
