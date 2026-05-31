@@ -1,4 +1,4 @@
-﻿function New-PsModule {
+function New-PsModule {
   # .SYNOPSIS
   #   Creates a PsModule Object, that can be saved to the disk.
   # .DESCRIPTION
@@ -72,7 +72,6 @@
 
   begin {
     $Module = $null; $Path = [PsCraft]::GetResolvedPath($Path)
-    #Requires -RunAsAdministrator
   }
 
   process {
@@ -104,10 +103,21 @@
       # $Module.Data = [PsModule]::CreateModuleData($configuration)
       throw "Config params r not yet supported (WIP)"
     }
-    if ($PSCmdlet.ShouldProcess("", "", "Format and Write Module folder structure")) {
+    if ($PSCmdlet.ShouldProcess('', '', 'Format and Write Module folder structure')) {
       [void]$Module.save(); $_p = $Module.Path.FullName
       if ([IO.Directory]::Exists($_p)) {
-        ([bool](Get-Command tree -CommandType Application -ea Ignore) ? ([string]::Join([char]10, (tree $_p | Out-String)) | cliHelper.core\Write-Console -f SlateBlue) : (cliHelper.core\Show-Tree $_p -Depth 5)) | Out-Host
+        try {
+          # Use cliHelper.core Tree renderer
+          $tree = [Tree]::new($_p)
+          [AnsiConsole]::Console.Write($tree)
+        } catch {
+          # Fall back to Show-Tree or shell tree
+          if (Get-Command 'cliHelper.core\Show-Tree' -ea Ignore) {
+            cliHelper.core\Show-Tree $_p -Depth 5
+          } elseif (Get-Command tree -CommandType Application -ea Ignore) {
+            Write-Host (tree $_p | Out-String) -ForegroundColor SlateBlue
+          }
+        }
       }
     }
   }
