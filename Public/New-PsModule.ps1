@@ -6,7 +6,7 @@ function New-PsModule {
   #   In one use case, its just a simplified wrapper for New-ModuleManifest which answers some of the parameters based on the files already in the module folder.
   #   In the second use case, it allows you to collect one or more scripts and put them into a new module folder.
   # .LINK
-  #   https://github.com/chadnpc/PsCraft/blob/main/Public/ModuleManager/New-PSModule.ps1
+  #   https://github.com/chadnpc/PsCraft/blob/main/Public/PsCraft/New-PSModule.ps1
   # .EXAMPLE
   #   $m = New-PsModule
   #   This example shows how to create a random module.
@@ -31,7 +31,7 @@ function New-PsModule {
     [Parameter(Mandatory = $false, ParameterSetName = 'ByName')]
     # The name of the author to use for the psd1 and copyright statement
     [PSDefaultValue(Help = { "ie: env:UserName" })]
-    [String]$Author = ([moduleManager]::GetAuthorName()),
+    [String]$Author = ([PsCraft]::GetAuthorName()),
 
     [Parameter(Mandatory = $false, ParameterSetName = 'ByName')]
     [PSDefaultValue(Help = { "'A collection of script files by UserName (uses the value from the Author parmeter)" })]
