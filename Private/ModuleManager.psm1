@@ -1,12 +1,9 @@
-﻿using namespace System.IO
+using namespace System.IO
 using namespace System.ComponentModel
 using namespace System.Collections.Generic
 using namespace System.Management.Automation
 using namespace System.Collections.ObjectModel
 using namespace System.Management.Automation.Language
-
-using module .\PsModule.psm1
-using module .\Models.psm1
 
 #region    ModuleManager
 # .SYNOPSIS
