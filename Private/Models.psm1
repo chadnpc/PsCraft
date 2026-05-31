@@ -1,8 +1,6 @@
-﻿using namespace System.IO
+using namespace System.IO
 using namespace System.Collections.Generic
 using namespace System.Management.Automation.Language
-
-using module .\Enums.psm1
 
 class ParseResult {
   [Token[]]$Tokens
