@@ -405,7 +405,7 @@ class PsModule : IDisposable {
     $this.Data.Where({ $_.Key -eq $Key }).Set($Value);
   }
   [void] FormatCode() {
-    $type = [type]"ModuleManager"
+    $type = [type]"PsCraft"
     $type::FormatCode($this)
   }
   [void] WritetoDisk([SaveOptions]$Options) {
