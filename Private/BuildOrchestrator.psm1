@@ -1,5 +1,6 @@
 using namespace System.IO
 using namespace System.Net
+using namespace System.Management.Automation
 using namespace System.Collections.Generic
 
 # .SYNOPSIS
@@ -13,10 +14,10 @@ class BuildOrchestrator : ModuleManager {
   static [scriptblock] $PSakeScriptBlock = $null
 
   BuildOrchestrator([string]$path, [string[]]$tasks, [string[]]$requiredModules, [PSCmdlet]$cmdlet) {
-    $this.Path             = $path
-    $this.TaskList         = $tasks
-    $this.RequiredModules  = $requiredModules
-    $this.Cmdlet           = $cmdlet
+    $this.Path = $path
+    $this.TaskList = $tasks
+    $this.RequiredModules = $requiredModules
+    $this.Cmdlet = $cmdlet
   }
 
   # ── Banner ──────────────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ class BuildOrchestrator : ModuleManager {
     $IsConnected = $( try {
         [Net.NetworkInformation.Ping]::new().Send('www.powershellgallery.com').Status -eq [Net.NetworkInformation.IPStatus]::Success
       } catch { $false } )
-    $L = (($this.RequiredModules | Select-Object @{l='L';e={$_.Length}}).L | Sort-Object -Descending)[0]
+    $L = (($this.RequiredModules | Select-Object @{l = 'L'; e = { $_.Length } }).L | Sort-Object -Descending)[0]
     try {
       $status = [Status]::new([AnsiConsole]::Console.GetWriter())
       $status.RefreshRateMs = 80
@@ -120,9 +121,9 @@ class BuildOrchestrator : ModuleManager {
       Register-PSRepository LocalPSRepo -SourceLocation $LocalPSRepo -PublishLocation $LocalPSRepo -InstallationPolicy Trusted -Verbose:$false -ea Ignore
       Register-PackageSource -Name LocalPsRepo -Location $LocalPSRepo -Trusted -ProviderName Bootstrap -ea Ignore
       if ($null -ne (Get-PSRepository LocalPSRepo -Verbose:$false -ea Ignore)) {
-        $ModuleName  = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')
+        $ModuleName = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')
         $BuildNumber = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildNumber')
-        $ModulePath  = [IO.Path]::Combine($([Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput')), $ModuleName, $BuildNumber)
+        $ModulePath = [IO.Path]::Combine($([Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput')), $ModuleName, $BuildNumber)
         $ModulePackage = [IO.Path]::Combine($LocalPSRepo, "${ModuleName}.${BuildNumber}.nupkg")
         if ([IO.File]::Exists($ModulePackage)) { Remove-Item -Path $ModulePackage -Force -ea SilentlyContinue }
         [BuildLog]::WriteHeading('Publish to Local PsRepository')
@@ -131,7 +132,7 @@ class BuildOrchestrator : ModuleManager {
           $mdPath = (Get-Module $m -ListAvailable -Verbose:$false)[0].Path | Split-Path
           Publish-Module -Path $mdPath -Repository LocalPSRepo -Verbose:$false -ea Ignore
         }
-        Publish-Module  -Path $ModulePath -Repository LocalPSRepo -Verbose:$false
+        Publish-Module -Path $ModulePath -Repository LocalPSRepo -Verbose:$false
         Install-Module $ModuleName -Repository LocalPSRepo -Force -Verbose:$false
       } else {
         $this.Cmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new([Exception]::new('Failed to create LocalPsRepo'), 'LocalPsRepo_NOT_FOUND', 'ObjectNotFound', $LocalPSRepo))
@@ -148,7 +149,7 @@ class BuildOrchestrator : ModuleManager {
           [Environment]::SetEnvironmentVariable($Name, $null)
         }
       }
-      $ModuleName  = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')
+      $ModuleName = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')
       $BuildNumber = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildNumber')
       if ($ModuleName) { Uninstall-Module $ModuleName -MinimumVersion $BuildNumber -Force -ea Ignore }
       if ([IO.Directory]::Exists($LocalPSRepo)) {
