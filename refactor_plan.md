@@ -1,88 +1,4 @@
 # PsCraft Refactor Plan
-
-> **Goal:** Flatten the nesting-loop crash, migrate all Private buildlog helpers into `BuildLog` static methods, delegate heavy public-cmdlet logic into Private classes, and wire in `cliHelper.core` console features (ANSI, FigletText, Progress, Status, ThreadRunner, prompts, Tree rendering, etc.) to replace every `Write-Host` call.
-
----
-
-## 1. Root Cause — Module Nesting Limit
-
-### What is happening
-
-PowerShell limits `using module` nesting to **10 levels**. The current chain is:
-
-```
-PsCraft.psm1
- └─ using module Private\ModuleManager.psm1      ← level 1
-     └─ using module Private\PsModule.psm1       ← level 2
-         └─ using module Private\ModuleManager.psm1  ← CIRCULAR → level 3 → … → 10 → CRASH
-```
-
-**Concrete circular chain:**
-
-| File | `using module` references |
-|------|--------------------------|
-| `PsCraft.psm1` | `BuildLog`, `Enums`, `Models`, `ModuleManager`, `PsModule`, `PsModuleData` |
-| `ModuleManager.psm1` | `PsModule.psm1`, `Models.psm1` |
-| `PsModule.psm1` | `Enums.psm1`, `PsModuleData.psm1`, `ModuleManager.psm1` (re-imports!) |
-| `PsModuleData.psm1` | *(no `using module` currently — safe leaf)* |
-| `BuildLog.psm1` | `Enums.psm1` |
-
-`PsModule.psm1` importing `ModuleManager.psm1` while `ModuleManager.psm1` imports `PsModule.psm1` creates the cycle. PowerShell follows each `using module` statement at parse-time and re-enters the chain until it hits depth 10.
-
-### Fix: Flatten the dependency graph
-
-**Rule:** Every `.psm1` in `Private\` becomes a **self-contained** class file. No private submodule may `using module` another private submodule. All inter-class linkage happens exclusively in **`PsCraft.psm1`** (the root loader), which already declares all `using module` statements in the correct topological order.
-
-**Required order in `PsCraft.psm1`:**
-
-```powershell
-# Layer 0 – no deps
-using module Private\Enums.psm1
-
-# Layer 1 – depends only on Enums (referenced via root PsCraft.psm1)
-using module Private\BuildLog.psm1
-using module Private\Models.psm1
-using module Private\PsModuleData.psm1
-
-# Layer 2 – depends on Models, Enums
-using module Private\ModuleManager.psm1
-
-# Layer 3 – depends on Enums, PsModuleData, ModuleManager
-using module Private\PsModule.psm1
-```
-
-**Edits per file:**
-
-| File | Remove these `using module` lines |
-|------|----------------------------------|
-| `Private\BuildLog.psm1` | `using module .\Enums.psm1` |
-| `Private\Models.psm1` | `using module .\Enums.psm1` |
-| `Private\PsModuleData.psm1` | *(none currently — keep clean)* |
-| `Private\ModuleManager.psm1` | `using module .\PsModule.psm1`, `using module .\Models.psm1` |
-| `Private\PsModule.psm1` | `using module .\Enums.psm1`, `using module .\PsModuleData.psm1`, `using module .\ModuleManager.psm1` |
-
-> [!IMPORTANT]
-> Also remove the `#Requires -Modules PsModuleBase, PsCraft` line from `PsCraft.psm1` — a module cannot require itself.
-
----
-
-## 2. BuildLog — Migrate from Cmdlets to Static Methods
-
-### Current state
-
-Six loose `.ps1` helper functions dot-sourced at runtime:
-
-| File | Function |
-|------|----------|
-| `Private\Get-Elapsed.ps1` | `Get-Elapsed` |
-| `Private\Write-BuildLog.ps1` | `Write-BuildLog` |
-| `Private\Write-Heading.ps1` | `Write-Heading` |
-| `Private\Write-EnvironmentSummary.ps1` | `Write-EnvironmentSummary` |
-| `Private\Write-TerminatingError.ps1` | `Write-TerminatingError` |
-| `Private\Invoke-CommandWithLog.ps1` | `Invoke-CommandWithLog` |
-
-The `BuildLog` class in `Private\BuildLog.psm1` already declares stub static methods for all six — they just have empty bodies.
-
 ### Target state
 
 `BuildLog.psm1` becomes the **single source of truth** for all build logging. The six `.ps1` helper files are **deleted**. Public cmdlets call `[BuildLog]::` static methods instead of the old functions. `Write-Host` is replaced with `[AnsiConsole]::Console` writes (with fallback).
@@ -237,7 +153,7 @@ class BuildLog {
 **New file: `Private\BuildOrchestrator.psm1`**
 
 ```powershell
-class BuildOrchestrator : ModuleManager {
+class BuildOrchestrator : PsCraft {
   [string[]] $TaskList
   [string]   $Path
   [string[]] $RequiredModules
@@ -294,9 +210,9 @@ function Build-Module {
 }
 ```
 
-### 3.2  `Set-BuildVariables.ps1` → delegate to `ModuleManager` static method
+### 3.2  `Set-BuildVariables.ps1` → delegate to `PsCraft` static method
 
-Extract the 12 `Set-Env` calls into `[ModuleManager]::SetBuildVariables([string]$Path, [string]$Prefix, [PsObject]$Data)`. The cmdlet becomes a ~20-line param-parsing wrapper that calls `[ModuleManager]::SetBuildVariables(...)`.
+Extract the 12 `Set-Env` calls into `[PsCraft]::SetBuildVariables([string]$Path, [string]$Prefix, [PsObject]$Data)`. The cmdlet becomes a ~20-line param-parsing wrapper that calls `[PsCraft]::SetBuildVariables(...)`.
 
 ### 3.3  `New-PsModule.ps1` — trim and delegate tree display
 
@@ -374,61 +290,6 @@ $fig = [FigletText]::new([FigletFont]"DEFAULT_3D", 'PsCraft')
 | `Get-ChildItem $outputModVerDir \| Format-Table` | `[Table]` via `[AnsiConsole]` |
 | `Get-PSakeScriptTasks \| Format-Table` | Rich `[Table]` with Name/Description/DependsOn |
 
----
-
-## 5. Updated Module Loading Order in `PsCraft.psm1`
-
-```powershell
-#!/usr/bin/env pwsh
-using namespace System.IO
-using namespace System.ComponentModel
-using namespace System.Collections.Generic
-using namespace System.Collections.ObjectModel
-using namespace System.Management.Automation.Language
-
-# ── Private submodules (topological order, zero circular deps) ──────────
-using module Private\Enums.psm1              # Layer 0: no deps
-using module Private\BuildLog.psm1           # Layer 1
-using module Private\Models.psm1             # Layer 1
-using module Private\PsModuleData.psm1       # Layer 1
-using module Private\ModuleManager.psm1      # Layer 2
-using module Private\PsModule.psm1           # Layer 3
-using module Private\BuildOrchestrator.psm1  # Layer 4: cliHelper.core types
-```
-
-> [!NOTE]
-> Remove `#Requires -Modules PsModuleBase, PsCraft` from `PsCraft.psm1`. `PsModuleBase` should be declared in `PsCraft.psd1 → RequiredModules`, not in the `.psm1`.
-
----
-
-## 6. File-by-File Change Summary
-
-```
-Private\
-  Enums.psm1                    KEEP     — Already clean leaf
-  BuildLog.psm1                 REWRITE  — Implement all 6 static methods with AnsiConsole
-  Models.psm1                   MODIFY   — Remove `using module .\Enums.psm1`
-  PsModuleData.psm1             KEEP     — Already a clean leaf
-  ModuleManager.psm1            MODIFY   — Remove `using module .\PsModule.psm1` and `.\Models.psm1`
-  PsModule.psm1                 MODIFY   — Remove all three `using module` lines
-  BuildOrchestrator.psm1        CREATE   — New class extracted from Build-Module.ps1
-  Get-Elapsed.ps1               DELETE
-  Write-BuildLog.ps1            DELETE
-  Write-Heading.ps1             DELETE
-  Write-EnvironmentSummary.ps1  DELETE
-  Write-TerminatingError.ps1    DELETE
-  Invoke-CommandWithLog.ps1     DELETE
-
-Public\
-  Build-Module.ps1              REFACTOR — Thin wrapper → BuildOrchestrator (~80 lines)
-  New-PsModule.ps1              REFACTOR — Trim, use [Tree] for dir display
-  Set-BuildVariables.ps1        REFACTOR — Delegate to [ModuleManager]::SetBuildVariables()
-
-PsCraft.psm1                    MODIFY   — Fix using module order, remove self-require, add BuildOrchestrator
-PsCraft.psd1                    MODIFY   — Add cliHelper.core@0.3.2 to RequiredModules, add BuildOrchestrator to NestedModules
-```
-
----
 
 ## 7. Implementation Order (Phases)
 
@@ -446,9 +307,8 @@ PsCraft.psd1                    MODIFY   — Add cliHelper.core@0.3.2 to Require
 
 ## 8. Open Questions for Review
 
-1. **`PsModuleBase`** — Is the `PsModuleBase` module installed/available? Several classes inherit from it (`PsCraft : PsModuleBase, ModuleManager`). Its source is not in this repo. Where is it?
-2. **PSake retention** — `Build-Module` uses `Invoke-Psake`. Should `BuildOrchestrator` keep PSake as a task runner, or replace it with a native class-based task graph? Removing PSake removes one required module.
-3. **`BuildOrchestrator` naming** — Alternatively `PsCraftBuilder` to align with the root class name. Preference?
-4. **`New-PsModule` `#Requires -RunAsAdministrator`** — This is inside a `begin {}` block, which is invalid in PowerShell. Should it be removed, or moved to the function's top?
-5. **`Build-Module`'s `Install-Dotnet`** — The `[TypeName]` parameter type on line 444 is undefined. Delete the entire inner function or fix before Phase 3?
-6. **`cliHelper.core` version pinning** — `0.3.2` is installed. Should `RequiredModules` pin the exact version or use `MinimumVersion`?
+1. **PSake retention** — `Build-Module` uses `Invoke-Psake`. Should `BuildOrchestrator` keep PSake as a task runner, or replace it with a native class-based task graph? Removing PSake removes one required module.
+2. **`BuildOrchestrator` naming** — Alternatively `PsCraftBuilder` to align with the root class name. Preference?
+3. **`New-PsModule` `#Requires -RunAsAdministrator`** — This is inside a `begin {}` block, which is invalid in PowerShell. Should it be removed, or moved to the function's top?
+4. **`Build-Module`'s `Install-Dotnet`** — The `[TypeName]` parameter type on line 444 is undefined. Delete the entire inner function or fix before Phase 3?
+5. **`cliHelper.core` version pinning** — `0.3.2` is installed. Should `RequiredModules` pin the exact version or use `MinimumVersion`?
