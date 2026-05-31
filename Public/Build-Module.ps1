@@ -57,20 +57,20 @@ function Build-Module {
     # Build the PSake scriptblock (same logic as before, stored on the class)
     [BuildOrchestrator]::PSakeScriptBlock = [scriptblock]::Create({
         Properties {
-          $taskList        = $Task
-          $Cmdlet          = $PSCmdlet
-          $ProjectName     = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')
-          $BuildNumber     = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildNumber')
-          $ProjectRoot     = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectPath')
-          $outputDir       = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput')
-          $PSVersion       = $PSVersionTable.PSVersion.ToString()
-          $outputModDir    = [IO.path]::Combine([Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput'), $ProjectName)
-          $tests           = [IO.Path]::Combine($projectRoot, 'Tests')
-          $lines           = ('-' * 70)
-          $TestFile        = "TestResults_PS${PSVersion}_$(Get-Date -UFormat %Y%m%d-%H%M%S).xml"
+          $taskList = $Task
+          $Cmdlet = $PSCmdlet
+          $ProjectName = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')
+          $BuildNumber = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildNumber')
+          $ProjectRoot = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectPath')
+          $outputDir = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput')
+          $PSVersion = $PSVersionTable.PSVersion.ToString()
+          $outputModDir = [IO.path]::Combine([Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput'), $ProjectName)
+          $tests = [IO.Path]::Combine($projectRoot, 'Tests')
+          $lines = ('-' * 70)
+          $TestFile = "TestResults_PS${PSVersion}_$(Get-Date -UFormat %Y%m%d-%H%M%S).xml"
           $outputModVerDir = [IO.path]::Combine([Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildOutput'), $ProjectName, $BuildNumber)
-          $PathSeperator   = [IO.Path]::PathSeparator
-          $DirSeperator    = [IO.Path]::DirectorySeparatorChar
+          $PathSeperator = [IO.Path]::PathSeparator
+          $DirSeperator = [IO.Path]::DirectorySeparatorChar
           $buildrequirements = <build_requirements>
           $null = @($taskList, $Cmdlet, $tests, $TestFile, $ProjectRoot, $outputDir, $outputModDir, $outputModVerDir, $lines, $DirSeperator, $PathSeperator, $buildrequirements)
         }
@@ -108,7 +108,7 @@ function Build-Module {
           if (!(Get-PackageProvider -Name Nuget)) {
             [BuildLog]::InvokeCommandWithLog({ Install-PackageProvider -Name NuGet -Force | Out-Null })
           }
-          $build_sys  = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildSystem')
+          $build_sys = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'BuildSystem')
           $lastCommit = $(try { git log -1 --pretty=%B } catch { [string]::Empty })
           [BuildLog]::Write("Current build system is $build_sys")
           [BuildLog]::WriteHeading('Finalizing build Prerequisites and Resolving dependencies ...')
@@ -135,12 +135,12 @@ function Build-Module {
           }
 
           New-Item -Path $outputModVerDir -ItemType Directory -Force -ea SilentlyContinue | Out-Null
-          $ModuleManifest     = [IO.FileInfo]::New([Environment]::GetEnvironmentVariable($env:RUN_ID + 'PSModuleManifest'))
+          $ModuleManifest = [IO.FileInfo]::New([Environment]::GetEnvironmentVariable($env:RUN_ID + 'PSModuleManifest'))
           [BuildLog]::Write("Add Module files ...`nRef: https://aka.ms/nuget/authoring-best-practices")
 
           # Progress bar for file copy
-          $filesToCopy = @('en-US','Private','Public','LICENSE','README.md',$ModuleManifest.Name,"$ProjectName.psm1")
-          $destDir     = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'PSModulePath')
+          $filesToCopy = @('en-US', 'Private', 'Public', 'LICENSE', 'README.md', $ModuleManifest.Name, "$ProjectName.psm1")
+          $destDir = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'PSModulePath')
           try {
             $progress = [Progress]::new([AnsiConsole]::Console)
             $progress.RefreshRateMs = 80
@@ -171,7 +171,7 @@ function Build-Module {
           }
           $publicFunctionsPath = [IO.Path]::Combine([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectPath'), 'Public')
           $publicFunctionNames = Get-ChildItem -Path $publicFunctionsPath -Filter '*.ps1' | Select-Object -ExpandProperty BaseName
-          $manifestContent     = Get-Content -Path $ModuleManifest -Raw
+          $manifestContent = Get-Content -Path $ModuleManifest -Raw
           $manifestContent = $manifestContent.Replace(
             "'<FunctionsToExport>'", $(if ((Test-Path -Path $publicFunctionsPath) -and $publicFunctionNames.count -gt 0) { "'$($publicFunctionNames -join "',`n        '")'" } else { $null })
           ).Replace('<ModuleVersion>', $BuildNumber
@@ -237,16 +237,16 @@ function Build-Module {
             $commParsed = [Environment]::GetEnvironmentVariable($env:RUN_ID + 'CommitMessage') | Select-String -Pattern '\sv\d+\.\d+\.\d+\s'
             if ($commParsed) { $commitVer = $commParsed.Matches.Value.Trim().Replace('v', '') }
             $current_build_version = (Get-Module $([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName'))).Version
-            $Latest_Module_Verion  = Get-LatestModuleVersion -Name ([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')) -Source PsGallery
-            $galVerSplit  = "$Latest_Module_Verion".Split('.')
-            $nextGalVer   = [System.Version](($galVerSplit[0..($galVerSplit.Count - 2)] -join '.') + '.' + ([int]$galVerSplit[-1] + 1))
+            $Latest_Module_Verion = Get-LatestModuleVersion -Name ([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName')) -Source PsGallery
+            $galVerSplit = "$Latest_Module_Verion".Split('.')
+            $nextGalVer = [System.Version](($galVerSplit[0..($galVerSplit.Count - 2)] -join '.') + '.' + ([int]$galVerSplit[-1] + 1))
             $versionToDeploy = switch ($true) {
               $($commitVer -and ([System.Version]$commitVer -lt $nextGalVer)) {
                 Set-Env -Name ($env:RUN_ID + 'CommitMessage') -Value $([Environment]::GetEnvironmentVariable($env:RUN_ID + 'CommitMessage')).Replace('!deploy', '')
                 $null; break
               }
               $($commitVer -and ([System.Version]$commitVer -gt $nextGalVer)) { [System.Version]$commitVer; break }
-              $($current_build_version -ge $nextGalVer)                        { $current_build_version; break }
+              $($current_build_version -ge $nextGalVer) { $current_build_version; break }
               $(([Environment]::GetEnvironmentVariable($env:RUN_ID + 'CommitMessage')) -match '!hotfix') { $nextGalVer; break }
               $(([Environment]::GetEnvironmentVariable($env:RUN_ID + 'CommitMessage')) -match '!minor') {
                 [System.Version]("{0}.{1}.{2}" -f $nextGalVer.Major, ([int]$nextGalVer.Minor + 1), 0); break
@@ -268,9 +268,9 @@ function Build-Module {
                 ver  = [version]::new($latest_Github_release.tag_name.substring(1))
                 url  = $latest_Github_release.html_url
               }
-              $Is_Lower_PsGallery_Version  = [version]$current_build_version -le $Latest_Module_Verion
-              $should_Publish_ToPsGallery  = ![string]::IsNullOrWhiteSpace($env:NUGETAPIKEY) -and !$Is_Lower_PsGallery_Version
-              $Is_Lower_GitHub_Version     = [version]$current_build_version -le $latest_Github_release.ver
+              $Is_Lower_PsGallery_Version = [version]$current_build_version -le $Latest_Module_Verion
+              $should_Publish_ToPsGallery = ![string]::IsNullOrWhiteSpace($env:NUGETAPIKEY) -and !$Is_Lower_PsGallery_Version
+              $Is_Lower_GitHub_Version = [version]$current_build_version -le $latest_Github_release.ver
               $should_Publish_GitHubRelease = ![string]::IsNullOrWhiteSpace($env:GitHubPAT) -and ($env:CI -eq 'true' -and $env:GITHUB_RUN_ID) -and !$Is_Lower_GitHub_Version
               if ($should_Publish_ToPsGallery) {
                 $manifestPath = Join-Path $outputModVerDir "$($([Environment]::GetEnvironmentVariable($env:RUN_ID + 'ProjectName'))).psd1"
@@ -326,7 +326,7 @@ function Build-Module {
     $orchestrator.ResolveBuildRequirements()
     if ($Help.IsPresent) {
       $tmpFile = New-Item $([IO.Path]::GetTempFileName().Replace('.tmp', '.ps1'))
-      Set-Content -Path $tmpFile -Value [BuildOrchestrator]::PSakeScriptBlock.ToString().Replace('<build_requirements>', '@()') | Out-Null
+      Set-Content -Path $tmpFile -Value ([BuildOrchestrator]::PSakeScriptBlock.ToString().Replace('<build_requirements>', '@()')) | Out-Null
       $orchestrator.ShowHelp($tmpFile.FullName)
       Remove-Item $tmpFile -Force -ea Ignore
       return
