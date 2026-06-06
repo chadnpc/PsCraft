@@ -501,8 +501,8 @@ class PsModule : IDisposable {
     $module.Name = $mName
     $module.Path = $Path
 
-    $module.Files = [System.Collections.Generic.List[psobject]]::new()
-    $module.Folders = [System.Collections.Generic.List[psobject]]::new()
+    $module.Files = [System.Collections.Generic.List[ModuleFile]]::new()
+    $module.Folders = [System.Collections.Generic.List[ModuleFolder]]::new()
 
     $defaults = [PsModuleDefaults]::new($mName, $type, $Path)
     $schema = $defaults.GetModuleSchema($mName, $type)
