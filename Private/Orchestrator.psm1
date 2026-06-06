@@ -1167,6 +1167,9 @@ class BuildOrchestrator : PsCraft {
         $srcManifest = [IO.Path]::Combine($this.Path, "$mName.psd1")
         if (Test-Path -Path $srcManifest -ea Ignore) {
           Copy-Item -Path $srcManifest -Destination $ModuleManifest.FullName -Force
+          # FileInfo.Exists is cached at construction; the just-created file
+          # would otherwise still report false below. Force a refresh.
+          $ModuleManifest.Refresh()
         }
       }
 
@@ -1256,6 +1259,9 @@ class BuildOrchestrator : PsCraft {
         $srcManifest = [IO.Path]::Combine($this.Path, "$mName.psd1")
         if (Test-Path -Path $srcManifest -ea Ignore) {
           Copy-Item -Path $srcManifest -Destination $ModuleManifest.FullName -Force
+          # FileInfo.Exists is cached at construction; the just-created file
+          # would otherwise still report false below. Force a refresh.
+          $ModuleManifest.Refresh()
         }
       }
 
@@ -1304,6 +1310,9 @@ class BuildOrchestrator : PsCraft {
         $srcManifest = [IO.Path]::Combine($this.Path, "$mName.psd1")
         if (Test-Path -Path $srcManifest -ea Ignore) {
           Copy-Item -Path $srcManifest -Destination $ModuleManifest.FullName -Force
+          # FileInfo.Exists is cached at construction; the just-created file
+          # would otherwise still report false below. Force a refresh.
+          $ModuleManifest.Refresh()
         }
       }
 
@@ -1356,6 +1365,9 @@ class BuildOrchestrator : PsCraft {
         $srcManifest = [IO.Path]::Combine($this.Path, "$mName.psd1")
         if (Test-Path -Path $srcManifest -ea Ignore) {
           Copy-Item -Path $srcManifest -Destination $ModuleManifest.FullName -Force
+          # FileInfo.Exists is cached at construction; the just-created file
+          # would otherwise still report false below. Force a refresh.
+          $ModuleManifest.Refresh()
         }
       }
 
