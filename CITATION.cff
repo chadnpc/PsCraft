@@ -1,0 +1,36 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: PsCraft
+message: >-
+  A Toolbox to speed up common PowerShell development
+  tasks.
+type: software
+authors:
+  - given-names: Alain
+    family-names: Herve
+    email: chadnpc@gmail.com
+identifiers:
+  - type: url
+    value: 'https://alainqtec.dev/'
+    description: Personal website
+  - type: url
+    value: 'https://x.com/chadnpc'
+    description: twitter profile
+repository-code: 'https://github.com/chadnpc/PsCraft'
+url: 'https://powershellgallery.com/packages/PsCraft'
+abstract: >-
+  PsCraft Toolbox provides cmdlets to speed up common
+  PowerShell development tasks.
+
+  Features:
+   - Module Creation.
+   - Module Managemen
+   - Secure Your Code
+   - Build GUIs faster using PowerShell
+keywords:
+  - PsCraft
+  - PowerShell
+  - toolbox
+license: MIT

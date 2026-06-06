@@ -1,0 +1,1 @@
+# templates for both binary and script modules
