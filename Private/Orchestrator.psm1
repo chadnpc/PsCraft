@@ -464,7 +464,14 @@ class PsModule : IDisposable {
     if (!$psd1Files) {
       throw [System.IO.FileNotFoundException]::new("No .psd1 manifest file found in directory $($Path.FullName)")
     }
-    $psd1 = $psd1Files[0]
+    # Prefer the manifest whose BaseName matches the directory name.
+    # A module folder may contain other .psd1 files (e.g. PSScriptAnalyzerSettings.psd1
+    # or en-US/*.strings.psd1). Get-ChildItem returns them alphabetically, so
+    # simply taking $psd1Files[0] often picked the wrong file and downstream
+    # treated the analyzer settings as if they were the module manifest.
+    $dirName = $Path.BaseName
+    $psd1 = $psd1Files | Where-Object { $_.BaseName -eq $dirName } | Select-Object -First 1
+    if (-not $psd1) { $psd1 = $psd1Files[0] }
     $mName = $psd1.BaseName
 
     # Import manifest data
@@ -508,6 +515,13 @@ class PsModule : IDisposable {
     $schema = $defaults.GetModuleSchema($mName, $type)
 
     $module.Data = [PsModuleData]::new($mName, $type, $Path)
+
+    # Ensure the dictionary 'Path' entry points to the actual manifest file
+    # we just loaded. PsModuleData::new derives a Path from (Get-Location), which
+    # is unreliable here (the loaded module may live elsewhere). Without this,
+    # subsequent Save() / New-ModuleManifest calls write to the wrong place
+    # (or fail because the value lacks the .psd1 extension).
+    $module.Data['Path'] = $psd1.FullName
 
     # Copy manifest keys to Data
     $manifestData.GetEnumerator().ForEach({
@@ -1145,7 +1159,7 @@ class BuildOrchestrator : PsCraft {
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
       $mod = [PsModule]::Load($this.Path)
-      [void][PsModuleData]::ReplaceTemplates(@($mod.Data))
+      [void][PsModuleData]::ReplaceTemplates($mod.Data)
       $mod.Save()
 
       $ModuleManifest = [IO.FileInfo]::new([IO.Path]::Combine($versionDir, "$mName.psd1"))
