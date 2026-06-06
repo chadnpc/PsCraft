@@ -346,13 +346,31 @@ class PsModule : IDisposable {
       if ($null -ne $this.Data.defaults) {
         $this.Data.defaults.GetDefaults().GetEnumerator().ForEach({
             $k = $_.Key; $v = $_.Value
-            # Replace <ModuleName> and {mName} tokens with the actual module name
+            # Replace placeholder tokens with actual values
             if ($v -is [scriptblock]) {
-              $str = $v.ToString().Replace('<ModuleName>', $mName).Replace('{mName}', $mName)
+              $str = $v.ToString()
+              $str = $str.Replace('<ModuleName>', $mName)
+              $str = $str.Replace('{mName}', $mName)
+              $str = $str.Replace('<ModuleVersion>', $this.Data['ModuleVersion'])
+              $str = $str.Replace('<LicenseUri>', $this.Data['LicenseUri'])
+              $str = $str.Replace('<ProjectUri>', $this.Data['ProjectUri'])
+              $str = $str.Replace('<RepositoryUri>', $this.Data['RepositoryUri'])
+              $str = $str.Replace('<IconUri>', $this.Data['IconUri'])
+              $str = $str.Replace('<Tags>', $this.Data['Tags'])
+              $str = $str.Replace('<FunctionsToExport>', $this.Data['FunctionsToExport'])
+              $str = $str.Replace('<ReleaseNotes>', $this.Data['ReleaseNotes'])
               $this.Data[$k] = [scriptblock]::Create($str)
             }
             elseif ($v -is [string]) {
-              $this.Data[$k] = $v.Replace('<ModuleName>', $mName).Replace('{mName}', $mName)
+              $v = $v.Replace('<ModuleName>', $mName).Replace('{mName}', $mName).Replace('<ModuleVersion>', $this.Data['ModuleVersion'])
+              $v = $v.Replace('<LicenseUri>', $this.Data['LicenseUri'])
+              $v = $v.Replace('<ProjectUri>', $this.Data['ProjectUri'])
+              $v = $v.Replace('<RepositoryUri>', $this.Data['RepositoryUri'])
+              $v = $v.Replace('<IconUri>', $this.Data['IconUri'])
+              $v = $v.Replace('<Tags>', $this.Data['Tags'])
+              $v = $v.Replace('<FunctionsToExport>', $this.Data['FunctionsToExport'])
+              $v = $v.Replace('<ReleaseNotes>', $this.Data['ReleaseNotes'])
+              $this.Data[$k] = $v
             }
             else {
               $this.Data[$k] = $v
