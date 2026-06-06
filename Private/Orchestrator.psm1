@@ -420,6 +420,7 @@ class PsModule : IDisposable {
       $PM['Path'] = [IO.Path]::Combine($this.Path.FullName, "$($this.Name).psd1")
     }
     New-ModuleManifest @PM | Out-Null
+    $this.ShowModuleDirTree()
     [BuildLog]::WriteStatus("Module files created", 'success')
   }
   static [PsModule] Load([IO.DirectoryInfo]$Path) {
@@ -493,6 +494,15 @@ class PsModule : IDisposable {
       Select-Object Name, @{l = 'Path'; e = { $_.value } }, @{l = 'Content'; e = { $this.Data[$_.Name] } }
     return $MF
   }
+  [void] ShowModuleDirTree() {
+    # this is a demo of Tree Rendering
+    $tree = [Tree]::new('Root')
+    $branch = $tree.Root.AddNode('Branch 1')
+    [void]$branch.AddNode('Leaf 1.1')
+    [void]$tree.Root.AddNode('Branch 2')
+    [AnsiConsole]::Console.Write($tree)
+  }
+
   [bool] Test() {
     $testsDir = [IO.Path]::Combine($this.Path.FullName, "Tests")
     if (!(Test-Path $testsDir)) { return $true }
