@@ -1119,6 +1119,20 @@ class BuildOrchestrator : PsCraft {
 
   # ── Compilation dispatch and methods ─────────────────────────────────────────
   [bool] Compile() {
+    # ------------------------------------------
+      $writer = [AnsiConsole]::Console.GetWriter()
+      $status = [Status]::new($writer)
+      $status.RefreshRateMs = 80
+
+      $status.Start('Downloading metadata', [Action[StatusContext]] {
+          param([StatusContext]$ctx)
+          Start-Sleep -Milliseconds 450
+          $ctx.Update('Finishing download')
+          Start-Sleep -Milliseconds 250
+        }
+      )
+      # ===========================================
+
     [BuildLog]::WriteHeading("Compiling module type: $($this.ModuleType)")
     [BuildLog]::WriteStep("Formatting module code...")
     $mod = [PsModule]::Load($this.Path)
@@ -1638,30 +1652,33 @@ class BuildOrchestrator : PsCraft {
     }
 
     try {
-      [AnsiConsole]::Progress().Start([Action[object]] {
-          param($ctx)
-          $cleanTask = $ctx.AddTask('[cyan1]Clean[/]', $true, 100)
-          $compileTask = $ctx.AddTask('[cyan1]Compile[/]', $true, 100)
-          $testTask = $ctx.AddTask('[cyan1]Test[/]', $true, 100)
-
-          if ('Clean' -in $tasks) { $this.Clean(); $cleanTask.Value = 100 }
-          if ('Compile' -in $tasks) { $this.Compile(); $compileTask.Value = 100 }
-          if ('Test' -in $tasks) { $this.Test(); $testTask.Value = 100 }
-        }
-      )
+      if ('Clean' -in $tasks) { [BuildLog]::WriteHeading('[cyan1]Clean[/]'); $this.Clean() }
+      if ('Compile' -in $tasks) { [BuildLog]::WriteHeading('[cyan1]Compile[/]'); $this.Compile() }
+      if ('Test' -in $tasks) { [BuildLog]::WriteHeading('[cyan1]Test[/]'); $this.Test() }
     }
     catch {
-      # Fallback: plain sequential execution with BuildLog step headers
-      if ('Clean' -in $tasks) { [BuildLog]::WriteHeading('Clean'); $this.Clean() }
-      if ('Compile' -in $tasks) { [BuildLog]::WriteHeading('Compile'); $this.Compile() }
-      if ('Test' -in $tasks) { [BuildLog]::WriteHeading('Test'); $this.Test() }
+      $null
     }
-
     return 0
   }
 
   [void] Clean() {
-    $versionDir = $this.Context.GetVersionedOutputPath()
+    # ------------------------------------------
+      $writer = [AnsiConsole]::Console.GetWriter()
+      $status = [Status]::new($writer)
+      $status.RefreshRateMs = 80
+
+      $versionDir = $this.Context.GetVersionedOutputPath()
+
+      $status.Start('Cleaning Output Path', [Action[StatusContext]] {
+          param([StatusContext]$ctx)
+          Start-Sleep -Milliseconds 450
+          $ctx.Update("Cleaning $versionDir")
+          Start-Sleep -Milliseconds 250
+        }
+      )
+      # ===========================================
+   
     if (Test-Path $versionDir -ea Ignore) {
       Remove-Item $versionDir -Recurse -Force -ea Ignore
     }
@@ -1669,6 +1686,20 @@ class BuildOrchestrator : PsCraft {
 
   [void] Test() {
     # To be implemented in Phase 5
+
+    # ------------------------------------------
+      $writer = [AnsiConsole]::Console.GetWriter()
+      $status = [Status]::new($writer)
+      $status.RefreshRateMs = 80
+
+      $status.Start('running tests', [Action[StatusContext]] {
+          param([StatusContext]$ctx)
+          Start-Sleep -Milliseconds 450
+          $ctx.Update('Finishing tests')
+          Start-Sleep -Milliseconds 250
+        }
+      )
+      # ===========================================
   }
 
   # ── Post-build: local repo publish + env cleanup ────────────────────────────
