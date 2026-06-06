@@ -495,12 +495,82 @@ class PsModule : IDisposable {
     return $MF
   }
   [void] ShowModuleDirTree() {
-    # this is a demo of Tree Rendering
-    $tree = [Tree]::new('Root')
-    $branch = $tree.Root.AddNode('Branch 1')
-    [void]$branch.AddNode('Leaf 1.1')
-    [void]$tree.Root.AddNode('Branch 2')
-    [AnsiConsole]::Console.Write($tree)
+    # Renders the actual directory tree of the created module using cliHelper.core
+    # AnsiConsole Tree widget. Folders are shown in bold blue with a trailing
+    # separator, files in muted grey. Common build/cache folders are skipped
+    # to keep the output readable.
+    if ($null -eq $this.Path -or [string]::IsNullOrWhiteSpace($this.Path.FullName)) {
+      [BuildLog]::WriteWarning("ShowModuleDirTree: module path is not set.")
+      return
+    }
+    if (![IO.Directory]::Exists($this.Path.FullName)) {
+      [BuildLog]::WriteWarning("ShowModuleDirTree: directory does not exist: $($this.Path.FullName)")
+      return
+    }
+
+    # Directories we never want to descend into
+    $skipDirs = [System.Collections.Generic.HashSet[string]]::new(
+      [string[]]@('.git', '.vs', '.idea', '.vscode-test', 'node_modules', 'bin', 'obj', 'packages', 'TestResults'),
+      [System.StringComparer]::OrdinalIgnoreCase
+    )
+
+    $maxDepth = 6
+
+    # Plain-unicode glyphs for common file types (safe in any modern terminal)
+    $fileGlyphs = @{
+      '.ps1'     = ''
+      '.psm1'    = ''
+      '.psd1'    = ''
+      '.cs'      = ''
+      '.csproj'  = ''
+      '.sln'     = ''
+      '.md'      = ''
+      '.txt'     = ''
+      '.json'    = ''
+      '.yml'     = ''
+      '.yaml'    = ''
+      '.xml'     = ''
+      '.cdxml'   = ''
+      '.gitignore' = ''
+      'license'  = ''
+    }
+
+    try {
+      $tree = [Tree]::new("[bold cyan]$($this.Name)[/]")
+      # Override default guide with the bold-line variant for clearer branches
+      $tree.Guide = [TreeGuide]::get_BoldLine()
+
+      $populate = {
+        param([TreeNode]$Parent, [IO.DirectoryInfo]$Dir, [int]$Depth)
+
+        if ($Depth -ge $maxDepth) { return }
+
+        $entries = Get-ChildItem -LiteralPath $Dir.FullName -Force -ErrorAction SilentlyContinue |
+          Sort-Object @{ Expression = { -not $_.PSIsContainer } }, Name
+
+        foreach ($entry in $entries) {
+          if ($entry.PSIsContainer) {
+            if ($skipDirs.Contains($entry.Name)) { continue }
+            $dirNode = $Parent.AddNode("[bold blue]$($entry.Name)/[/]")
+            # Recurse via the script-block so we capture $skipDirs / $maxDepth / $fileGlyphs
+            & $populate $dirNode $entry ($Depth + 1)
+          } else {
+            $key = [IO.Path]::GetExtension($entry.Name).ToLowerInvariant()
+            if (-not $fileGlyphs.ContainsKey($key)) { $key = $entry.Name.ToLowerInvariant() }
+            $glyph = if ($fileGlyphs.ContainsKey($key)) { $fileGlyphs[$key] } else { '' }
+            $label = if ($glyph) { "$glyph [grey]$($entry.Name)[/]" } else { "[grey]$($entry.Name)[/]" }
+            [void]$Parent.AddNode($label)
+          }
+        }
+      }
+
+      & $populate $tree.Root ([IO.DirectoryInfo]::new($this.Path.FullName)) 0
+
+      [BuildLog]::WriteStep("Module directory tree")
+      [AnsiConsole]::Console.Write($tree)
+    } catch {
+      [BuildLog]::WriteWarning("ShowModuleDirTree failed: $($_ | Format-List * -Force | Out-String)")
+    }
   }
 
   [bool] Test() {
