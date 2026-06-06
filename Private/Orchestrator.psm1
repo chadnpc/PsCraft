@@ -647,17 +647,27 @@ class PsModule : IDisposable {
     }
     return $success
   }
-  [void] Publish() {
-    $this.Publish('LocalRepo', [System.IO.Path]::GetDirectoryName($Pwd))
+  [BuildOrchestrator] Build() {
+    $orchestrator = [BuildOrchestrator]::new($this.Path, "Compile", $this.data.RequiredModules, $PSCmdlet)
+    return $orchestrator
   }
-  [void] Publish($repoName, $repoPath) {
-    if (Test-Path -Type Container -Path $repoPath -ErrorAction SilentlyContinue) {
-      throw ""
+  [void] Publish() {
+    $this.Publish('LocalRepo', [IO.DirectoryInfo]::new((Get-Location).Path))
+  }
+  [void] Publish([string]$repoName, [IO.DirectoryInfo]$repoPath) {
+    [validatenotnullorwhitespace()][string]$repoName = $repoName
+    if ($repoPath.FullName -eq $this.Path.FullName) {
+      throw [System.IO.InvalidDataException]::new("Repository path cannot be the same as the module path.")
     }
-    else {
-      New-Item -Path $repoPath -ItemType Directory | Out-Null
+    if (![IO.Directory]::Exists($repoPath.FullName)) {
+      New-Item -Path $repoPath -ItemType Directory -Force -ea Ignore | Out-Null
     }
-    $this.Save()
+    if (![IO.Directory]::Exists($repoPath.FullName)) {
+      throw [System.IO.DirectoryNotFoundException]::new("FAILED to create directory: $($repoPath.FullName)")
+    }
+    if (![IO.Directory]::Exists($this.Path.FullName)) {
+      $this.Save()
+    }
     # If the PSrepo is not known, create one.
     if (![bool](Get-PSRepository "$repoName" -ErrorAction SilentlyContinue).Trusted) {
       $repoParams = @{
