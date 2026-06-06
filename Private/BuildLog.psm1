@@ -157,6 +157,7 @@ class BuildLog {
       $date + $tag + $_
     }
     $text = $lines -join "`n"
+    $text = $text.Replace('[', '𓉘').Replace(']', '𓉝')
     try {
       [AnsiConsole]::Console.Markup("[$color]$prefix[/] ")
       [AnsiConsole]::Console.MarkupLine($text)
