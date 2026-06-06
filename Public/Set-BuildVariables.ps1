@@ -30,8 +30,13 @@ function Set-BuildVariables {
     if ($null -eq $Version) { throw [System.ArgumentNullException]::new('version', 'Please make sure localizedData.ModuleVersion is not null.') }
     if (![bool][int]$env:IsAC) {
       $LocEnvFile = [IO.FileInfo]::New([IO.Path]::GetFullPath([IO.Path]::Combine($Path, '.env')))
+      $ExEnvFile = [IO.FileInfo]::New([IO.Path]::GetFullPath([IO.Path]::Combine($Path, '.env.example')))
       if (!$LocEnvFile.Exists) {
-        New-Item -Path $LocEnvFile.FullName -ItemType File -ErrorAction Stop | Out-Null
+        if ($ExEnvFile.Exists) {
+          Copy-Item $ExEnvFile $LocEnvFile -Force
+        } else {
+          New-Item -Path $LocEnvFile.FullName -ItemType File -ErrorAction Stop | Out-Null
+        }
         [BuildLog]::Write('Created a new .env file')
       }
       Set-Env -source $LocEnvFile -Scope Process
