@@ -527,12 +527,12 @@ class PsModule : IDisposable {
   static [PsModule] Load([string]$Name, [string]$Path) {
     return [PsModule]::Load([IO.DirectoryInfo]::new([PsModuleBase]::GetResolvedPath([IO.Path]::Combine($Path, $Name))))
   }
-  [PsObject[]] GetFiles() {
+  hidden [PsObject[]] GetFiles() {
     # Join Files (which have path info + attributes) with Data (which has content values)
     $MF = $this.Files.Where({ $_.Attributes -contains 'FileContent' -and $_.Attributes -notcontains 'ManifestKey' }) | Select-Object Name, @{l = 'Path'; e = { $_.value } }, @{l = 'Content'; e = { $this.Data[$_.Name] } }
     return $MF
   }
-  [Tree] GetDirTree() {
+  hidden [Tree] GetDirTree() {
     # Renders the actual directory tree of the created module using cliHelper.core
     # AnsiConsole Tree widget. Folders are shown in bold blue with a trailing
     # separator, files in muted grey. Common build/cache folders are skipped
@@ -556,21 +556,21 @@ class PsModule : IDisposable {
 
     # Plain-unicode glyphs for common file types (safe in any modern terminal)
     $fileGlyphs = @{
-      '.ps1'       = ''
-      '.psm1'      = ''
-      '.psd1'      = ''
-      '.cs'        = ''
-      '.csproj'    = ''
-      '.sln'       = ''
-      '.md'        = ''
-      '.txt'       = ''
-      '.json'      = ''
-      '.yml'       = ''
-      '.yaml'      = ''
-      '.xml'       = ''
-      '.cdxml'     = ''
-      '.gitignore' = ''
-      'license'    = ''
+      '.ps1'       = '🖻'
+      '.psm1'      = '📦'
+      '.psd1'      = '🧾'
+      '.cs'        = '🗎'
+      '.csproj'    = '🗎'
+      '.sln'       = '🖺'
+      '.md'        = '🗎'
+      '.txt'       = '📄'
+      '.json'      = '🖺'
+      '.yml'       = '🖺'
+      '.yaml'      = '🖺'
+      '.xml'       = '🗎'
+      '.cdxml'     = '🗎'
+      '.gitignore' = '🖺'
+      'license'    = '📜'
     }
 
     try {
