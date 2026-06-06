@@ -297,7 +297,7 @@ PsCraft ships with workflows for both GitHub Actions and Azure Pipelines:
 - **Devcontainer** — `.devcontainer/` provides a reproducible containerized dev environment (Dockerfile + `devcontainer.json`).
 
 
-## All documentation Links and Learning Resources
+## Documentation and Learning Resources
 
 - [About_Modules](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_modules) — Microsoft's official module documentation.
 - [About_logger_module](./about_logger_module_usage.md) — Thread-safe logging dependency.
