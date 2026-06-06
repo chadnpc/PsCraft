@@ -691,6 +691,7 @@ class PsModule : IDisposable {
     $this.Data = $null
     if ($null -ne $this.Files) { $this.Files.Clear() }
     if ($null -ne $this.Folders) { $this.Folders.Clear() }
+    $this.Path | Remove-Item -Recurse -Force -ea Ignore
   }
 
   [bool] Equals([object]$other) {
