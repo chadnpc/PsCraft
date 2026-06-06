@@ -48,11 +48,13 @@ class PsModuleSchema {
     $this.Files = [System.Collections.Generic.List[psobject]]::new()
     $Schema.Files.GetEnumerator().ForEach({
         $this.Files.Add([SchemaNode]::new($_.Key, $_.Value))
-      })
+      }
+    )
     $this.Folders = [System.Collections.Generic.List[psobject]]::new()
     $Schema.Folders.GetEnumerator().ForEach({
         $this.Folders.Add([SchemaNode]::new($_.Key, $_.Value))
-      })
+      }
+    )
   }
 }
 
@@ -141,7 +143,7 @@ class PsModuleDefaults {
           Publishyaml           = $this.GetModulePublishyaml()
           GitIgnore             = ".env`n.env.local`nBuildOutput/`nLocalPSRepo/`nTests/results.xml`nTests/Resources/"
           CICDyaml              = $this.GetModuleCICDyaml()
-          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/cliHelper.xconvert/0.1.3 -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
+          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/$Name/<ModuleVersion> -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
           Tags                  = [string[]]("PowerShell", $Name, [Environment]::UserName)
           ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Functions ...`n- Optimizations`n"
           ProcessorArchitecture = 'None'
@@ -181,7 +183,7 @@ class PsModuleDefaults {
           Publishyaml           = $this.GetModulePublishyaml()
           GitIgnore             = ".env`n.env.local`nBuildOutput/`nLocalPSRepo/`nTests/results.xml`nTests/Resources/`nbin/`nobj/"
           CICDyaml              = $this.GetModuleCICDyaml()
-          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/cliHelper.xconvert/0.1.3 -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
+          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/$Name/<ModuleVersion> -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
           Tags                  = [string[]]("PowerShell", $Name, [Environment]::UserName)
           ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Binary compilation`n"
           ProcessorArchitecture = 'None'
@@ -219,7 +221,7 @@ class PsModuleDefaults {
           Publishyaml           = $this.GetModulePublishyaml()
           GitIgnore             = ".env`n.env.local`nBuildOutput/`nLocalPSRepo/`nTests/results.xml`nTests/Resources/"
           CICDyaml              = $this.GetModuleCICDyaml()
-          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/cliHelper.xconvert/0.1.3 -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
+          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/$Name/<ModuleVersion> -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
           Tags                  = [string[]]("PowerShell", $Name, [Environment]::UserName)
           ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- Manifest-only release`n"
           ProcessorArchitecture = 'None'
@@ -258,7 +260,7 @@ class PsModuleDefaults {
           Publishyaml           = $this.GetModulePublishyaml()
           GitIgnore             = ".env`n.env.local`nBuildOutput/`nLocalPSRepo/`nTests/results.xml`nTests/Resources/"
           CICDyaml              = $this.GetModuleCICDyaml()
-          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/cliHelper.xconvert/0.1.3 -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
+          DotEnv                = "#usage example: Publish-Module -Path BuildOutput/$Name/<ModuleVersion> -NuGetApiKey `$env:NUGET_API_KEY`nNUGET_API_KEY=somethinglike_6arai6wi2rgzepnx6shcc24x2ka"
           Tags                  = [string[]]("PowerShell", $Name, [Environment]::UserName)
           ReleaseNotes          = "# Release Notes`n`n- Version_<ModuleVersion>`n- CIM CDXML integration`n"
           ProcessorArchitecture = 'None'
@@ -300,7 +302,7 @@ class PsModuleDefaults {
             Publishyaml      = './.github/workflows/publish.yaml'
             GitIgnore        = './.gitignore'
             CICDyaml         = './.github/workflows/build_module.yaml'
-            DotEnv           = './.env'
+            DotEnv           = './.env.example'
           }
           Folders = @{
             root      = './'
@@ -327,7 +329,7 @@ class PsModuleDefaults {
             ModuleTest  = './Tests/{mName}.Tests.ps1'
             GitIgnore   = './.gitignore'
             CICDyaml    = './.github/workflows/build_module.yaml'
-            DotEnv      = './.env'
+            DotEnv      = './.env.example'
           }
           Folders = @{
             root      = './'
@@ -350,7 +352,7 @@ class PsModuleDefaults {
             ModuleTest = './Tests/{mName}.Tests.ps1'
             GitIgnore  = './.gitignore'
             CICDyaml   = './.github/workflows/build_module.yaml'
-            DotEnv     = './.env'
+            DotEnv     = './.env.example'
           }
           Folders = @{
             root      = './'
@@ -373,7 +375,7 @@ class PsModuleDefaults {
             ModuleTest    = './Tests/{mName}.Tests.ps1'
             GitIgnore     = './.gitignore'
             CICDyaml      = './.github/workflows/build_module.yaml'
-            DotEnv        = './.env'
+            DotEnv        = './.env.example'
           }
           Folders = @{
             root      = './'
@@ -396,7 +398,8 @@ class PsModuleDefaults {
   hidden [scriptblock] SafeGetScriptBlock([string]$Ps1filePath) {
     try {
       return $this.GetScriptBlock($Ps1filePath)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Script block retrieval failed for $Ps1filePath`n$($_ | Format-List * -Force | Out-String)")
       return [scriptblock]::Create("{}");
     }
@@ -404,7 +407,8 @@ class PsModuleDefaults {
   hidden [string] SafeGetTemplateText([string]$filePath) {
     try {
       return $this.GetTemplateText($filePath)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Template text retrieval failed for $filePath`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -412,7 +416,8 @@ class PsModuleDefaults {
   hidden [string] SafeGetReadmeText([string]$ModuleName) {
     try {
       return (PsModuleBase\Get-ModuleReadmeText -n $ModuleName 2>$null)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Readme text retrieval failed for $ModuleName`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -420,7 +425,8 @@ class PsModuleDefaults {
   hidden [string] SafeGetLicenseText() {
     try {
       return (PsModuleBase\Get-ModuleLicenseText 2>$null)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("License text retrieval failed`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -428,7 +434,8 @@ class PsModuleDefaults {
   hidden [string] GetLocalLicenseText() {
     try {
       return [IO.File]::ReadAllText((Join-Path (Split-Path -Parent $Script:PSScriptRoot) "LICENSE"))
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Local license text retrieval failed`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -506,7 +513,8 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
   [void] Set($k, $v) {
     if ($this.ContainsKey($k)) {
       $this[$k] = $v
-    } else {
+    }
+    else {
       $this.Add($k, $v)
     }
   }
@@ -519,10 +527,12 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
         $formatted = Invoke-Formatter -ScriptDefinition $this[$k].ToString() -Verbose:$false
         if ($this[$k] -is [scriptblock]) {
           $this[$k] = [scriptblock]::Create($formatted)
-        } else {
+        }
+        else {
           $this[$k] = $formatted
         }
-      } catch {
+      }
+      catch {
         # keep original on formatter failure
         [BuildLog]::WriteWarning("Formatter failed for key: $k`n$($_ | Format-List * -Force | Out-String)")
       }
