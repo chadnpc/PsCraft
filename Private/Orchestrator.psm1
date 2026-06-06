@@ -417,7 +417,8 @@ class PsModule : IDisposable {
         $content = if ($null -ne $_.Content) { $_.Content.ToString() } else { '' }
         [IO.File]::WriteAllText($_.Path.FullName, $content, [System.Text.Encoding]::UTF8)
         if ($debug) { Write-Debug "Created $($_.Name)" }
-      })
+      }
+    )
     # Build manifest params from Files that have ManifestKey attribute
     $PM = @{}
     $this.Files.Where({ $_.Attributes -contains 'ManifestKey' }).ForEach({
@@ -430,7 +431,10 @@ class PsModule : IDisposable {
       $PM['Path'] = [IO.Path]::Combine($this.Path.FullName, "$($this.Name).psd1")
     }
     New-ModuleManifest @PM | Out-Null
-    $this.ShowModuleDirTree()
+    $tree = $this.GetDirTree()
+    if ($null -ne $tree) {
+      [AnsiConsole]::Console.Write($tree)
+    }
     [BuildLog]::WriteStatus("Module files created", 'success')
   }
   static [PsModule] Load([IO.DirectoryInfo]$Path) {
@@ -504,22 +508,21 @@ class PsModule : IDisposable {
   }
   [PsObject[]] GetFiles() {
     # Join Files (which have path info + attributes) with Data (which has content values)
-    $MF = $this.Files.Where({ $_.Attributes -contains 'FileContent' -and $_.Attributes -notcontains 'ManifestKey' }) |
-    Select-Object Name, @{l = 'Path'; e = { $_.value } }, @{l = 'Content'; e = { $this.Data[$_.Name] } }
+    $MF = $this.Files.Where({ $_.Attributes -contains 'FileContent' -and $_.Attributes -notcontains 'ManifestKey' }) | Select-Object Name, @{l = 'Path'; e = { $_.value } }, @{l = 'Content'; e = { $this.Data[$_.Name] } }
     return $MF
   }
-  [void] ShowModuleDirTree() {
+  [Tree] GetDirTree() {
     # Renders the actual directory tree of the created module using cliHelper.core
     # AnsiConsole Tree widget. Folders are shown in bold blue with a trailing
     # separator, files in muted grey. Common build/cache folders are skipped
     # to keep the output readable.
     if ($null -eq $this.Path -or [string]::IsNullOrWhiteSpace($this.Path.FullName)) {
-      [BuildLog]::WriteWarning("ShowModuleDirTree: module path is not set.")
-      return
+      [BuildLog]::WriteWarning("GetDirTree: module path is not set.")
+      return $null
     }
     if (![IO.Directory]::Exists($this.Path.FullName)) {
-      [BuildLog]::WriteWarning("ShowModuleDirTree: directory does not exist: $($this.Path.FullName)")
-      return
+      [BuildLog]::WriteWarning("GetDirTree: directory does not exist: $($this.Path.FullName)")
+      return $null
     }
 
     # Directories we never want to descend into
@@ -527,7 +530,7 @@ class PsModule : IDisposable {
       [string[]]@('.git', '.vs', '.idea', '.vscode-test', 'node_modules', 'bin', 'obj', 'packages', 'TestResults'),
       [System.StringComparer]::OrdinalIgnoreCase
     )
-
+    $tree = $null
     $maxDepth = 6
 
     # Plain-unicode glyphs for common file types (safe in any modern terminal)
@@ -564,7 +567,7 @@ class PsModule : IDisposable {
         foreach ($entry in $entries) {
           if ($entry.PSIsContainer) {
             if ($skipDirs.Contains($entry.Name)) { continue }
-            $dirNode = $Parent.AddNode("blue]$($entry.Name)/[/]")
+            $dirNode = $Parent.AddNode("[blue]$($entry.Name)/[/]")
             # Recurse via the script-block so we capture $skipDirs / $maxDepth / $fileGlyphs
             & $populate $dirNode $entry ($Depth + 1)
           }
@@ -581,11 +584,11 @@ class PsModule : IDisposable {
       & $populate $tree.Root ([IO.DirectoryInfo]::new($this.Path.FullName)) 0
 
       [BuildLog]::WriteStep("Module directory tree")
-      [AnsiConsole]::Console.Write($tree)
     }
     catch {
-      [BuildLog]::WriteWarning("ShowModuleDirTree failed: $($_ | Format-List * -Force | Out-String)")
+      [BuildLog]::WriteWarning("GetDirTree failed: $($_ | Format-List * -Force | Out-String)")
     }
+    return $tree
   }
 
   [bool] Test() {
