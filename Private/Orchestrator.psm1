@@ -588,7 +588,7 @@ class PsModule : IDisposable {
         foreach ($entry in $entries) {
           if ($entry.PSIsContainer) {
             if ($skipDirs.Contains($entry.Name)) { continue }
-            $dirNode = $Parent.AddNode("[blue]$($entry.Name)/[/]")
+            $dirNode = $Parent.AddNode("[blue]$($entry.Name)[/]")
             # Recurse via the script-block so we capture $skipDirs / $maxDepth / $fileGlyphs
             & $populate $dirNode $entry ($Depth + 1)
           }
