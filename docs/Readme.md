@@ -261,7 +261,9 @@ Full in-depth usage, custom `LogEntry` subclasses, and appender configuration ar
 
 ### PowerShell Class System
 
-PsCraft's domain layer is implemented with PowerShell classes (constructors, methods, properties, inheritance, and interfaces). The relevant `about_*` topics are mirrored in this folder:
+PsCraft's domain layer is implemented with PowerShell classes.
+
+If you are new to PowerShell class development (constructors, methods, properties, inheritance, and interfaces), these `about_*` topics will greatly help you:
 
 - [About_Classes_Constructors](./about_Classes_Constructors.md) — How to define constructors, static constructors, base-class invocation, `Init()` chaining pattern (used heavily in PsCraft's `PsModule` family — see [Coding Conventions](#coding-conventions)).
 - [About_Classes_Methods](./about_Classes_Methods.md) — Method definitions, static methods, hidden methods, `Update-TypeData` pattern.
@@ -295,7 +297,7 @@ PsCraft ships with workflows for both GitHub Actions and Azure Pipelines:
 - **Devcontainer** — `.devcontainer/` provides a reproducible containerized dev environment (Dockerfile + `devcontainer.json`).
 
 
-## Documentation Links
+## All documentation Links and Learning Resources
 
 - [About_Modules](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_modules) — Microsoft's official module documentation.
 - [About_logger_module](./about_logger_module_usage.md) — Thread-safe logging dependency.
@@ -304,10 +306,6 @@ PsCraft ships with workflows for both GitHub Actions and Azure Pipelines:
 - [About_Classes_Properties](./about_Classes_Properties.md) — PowerShell class property patterns.
 - [About_Classes_Inheritance](./about_Classes_Inheritance.md) — Inheritance, interfaces, and type accelerators.
 - [The Monad Manifesto](https://www.jsnover.com/Docs/MonadManifesto.pdf) — Core PowerShell concepts.
-
-
-## Community Resources
-
 - [The SysAdmin Channel](https://thesysadminchannel.com/powershell-module/) — Practical module development.
 - [Mike F Robbins' Blog](https://mikefrobbins.com/2018/08/17/powershell-script-module-design-public-private-versus-functions-internal-folders-for-functions/) — Module design patterns.
 - [PowerShell Modules and Encapsulation](https://www.simple-talk.com/dotnet/.net-tools/further-down-the-rabbit-hole-powershell-modules-and-encapsulation/) — Advanced module concepts.
