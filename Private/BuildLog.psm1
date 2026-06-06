@@ -159,11 +159,10 @@ class BuildLog {
     $text = $lines -join "`n"
     try {
       [AnsiConsole]::Console.Markup("[$color]$prefix[/] ")
-      [AnsiConsole]::Console.MarkupLine($text)
+      [AnsiConsole]::Console.Write("`n$text`n")
     }
     catch {
-      Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
-      Write-Host $text -ForegroundColor Red
+      Write-Host "$($_ | Format-List * -Force | Out-String)" -f Red`
     }
   }
 
