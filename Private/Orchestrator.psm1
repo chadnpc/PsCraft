@@ -28,7 +28,8 @@ class AliasVisitor : System.Management.Automation.Language.AstVisitor {
     if (!$this.Command) {
       $this.Command = $ast.Value
       return [AstVisitAction]::Continue
-    } else {
+    }
+    else {
       # Nobody should use minimal parameters like -N for -Name ...
       # But if they do, our parser works anyway!
       switch -Wildcard ($this.Parameter) {
@@ -52,7 +53,8 @@ class AliasVisitor : System.Management.Automation.Language.AstVisitor {
             # For bare arguments, the order is Name, Value:
             if (!$this.Name) {
               $this.Name = $ast.Value
-            } else {
+            }
+            else {
               $this.Value = $ast.Value
             }
           }
@@ -64,7 +66,8 @@ class AliasVisitor : System.Management.Automation.Language.AstVisitor {
       if ($this.Name -and $this.Command -eq "Remove-Alias") {
         $this.Command = "Remove-Alias"
         return [AstVisitAction]::StopVisit
-      } elseif ($this.Name -and $this.Scope -eq "Global") {
+      }
+      elseif ($this.Name -and $this.Scope -eq "Global") {
         return [AstVisitAction]::StopVisit
       }
       return [AstVisitAction]::Continue
@@ -94,7 +97,8 @@ class AliasVisitor : System.Management.Automation.Language.AstVisitor {
           $this.Aliases.Remove($Params.Name)
         }
         # We don't need to export global aliases, because they broke out already
-      } elseif ($Params.Name -and $Params.Scope -ine 'Global') {
+      }
+      elseif ($Params.Name -and $Params.Scope -ine 'Global') {
         $this.Aliases.Add($this.Parameters.Name)
       }
     }
@@ -346,26 +350,32 @@ class PsModule : IDisposable {
             if ($v -is [scriptblock]) {
               $str = $v.ToString().Replace('<ModuleName>', $mName).Replace('{mName}', $mName)
               $this.Data[$k] = [scriptblock]::Create($str)
-            } elseif ($v -is [string]) {
+            }
+            elseif ($v -is [string]) {
               $this.Data[$k] = $v.Replace('<ModuleName>', $mName).Replace('{mName}', $mName)
-            } else {
+            }
+            else {
               $this.Data[$k] = $v
             }
           }
         )
       }
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("$($_ | Format-List * -Force | Out-String)")
     }
     # Lets Make sure Set required manifest fields that New-ModuleManifest always needs
     $this.Data['Path'] = [System.IO.Path]::Combine($mroot, "$mName.psd1")
     if ($Type -eq [System.Management.Automation.ModuleType]::Script) {
       $this.Data['RootModule'] = "$mName.psm1"
-    } elseif ($Type -eq [System.Management.Automation.ModuleType]::Binary) {
+    }
+    elseif ($Type -eq [System.Management.Automation.ModuleType]::Binary) {
       $this.Data['RootModule'] = "$mName.dll"
-    } elseif ($Type -eq [System.Management.Automation.ModuleType]::Cim) {
+    }
+    elseif ($Type -eq [System.Management.Automation.ModuleType]::Cim) {
       $this.Data['RootModule'] = "Cim/$mName.cdxml"
-    } else {
+    }
+    else {
       $this.Data['RootModule'] = ''
     }
     $this.Data['Author'] = PsModuleBase\Get-AuthorName
@@ -443,16 +453,20 @@ class PsModule : IDisposable {
       $rootModuleStr = $rootModule -join ''
       if ($rootModuleStr -like "*.dll") {
         $type = [System.Management.Automation.ModuleType]::Binary
-      } elseif ($rootModuleStr -like "*.cdxml") {
+      }
+      elseif ($rootModuleStr -like "*.cdxml") {
         $type = [System.Management.Automation.ModuleType]::Cim
-      } elseif ($rootModuleStr -like "*.psm1") {
+      }
+      elseif ($rootModuleStr -like "*.psm1") {
         $type = [System.Management.Automation.ModuleType]::Script
       }
-    } else {
+    }
+    else {
       # Fallback checks on folders
       if (Test-Path -Path [IO.Path]::Combine($Path.FullName, "src") -PathType Container) {
         $type = [System.Management.Automation.ModuleType]::Binary
-      } elseif (Test-Path -Path [IO.Path]::Combine($Path.FullName, "Cim") -PathType Container) {
+      }
+      elseif (Test-Path -Path [IO.Path]::Combine($Path.FullName, "Cim") -PathType Container) {
         $type = [System.Management.Automation.ModuleType]::Cim
       }
     }
@@ -491,7 +505,7 @@ class PsModule : IDisposable {
   [PsObject[]] GetFiles() {
     # Join Files (which have path info + attributes) with Data (which has content values)
     $MF = $this.Files.Where({ $_.Attributes -contains 'FileContent' -and $_.Attributes -notcontains 'ManifestKey' }) |
-      Select-Object Name, @{l = 'Path'; e = { $_.value } }, @{l = 'Content'; e = { $this.Data[$_.Name] } }
+    Select-Object Name, @{l = 'Path'; e = { $_.value } }, @{l = 'Content'; e = { $this.Data[$_.Name] } }
     return $MF
   }
   [void] ShowModuleDirTree() {
@@ -536,7 +550,7 @@ class PsModule : IDisposable {
     }
 
     try {
-      $tree = [Tree]::new("[bold cyan]$($this.Name)[/]")
+      $tree = [Tree]::new("[cyan1]$($this.Name)[/]")
       # Override default guide with the bold-line variant for clearer branches
       $tree.Guide = [TreeGuide]::get_BoldLine()
 
@@ -545,16 +559,16 @@ class PsModule : IDisposable {
 
         if ($Depth -ge $maxDepth) { return }
 
-        $entries = Get-ChildItem -LiteralPath $Dir.FullName -Force -ErrorAction SilentlyContinue |
-          Sort-Object @{ Expression = { -not $_.PSIsContainer } }, Name
+        $entries = Get-ChildItem -LiteralPath $Dir.FullName -Force -ErrorAction SilentlyContinue | Sort-Object @{ Expression = { -not $_.PSIsContainer } }, Name
 
         foreach ($entry in $entries) {
           if ($entry.PSIsContainer) {
             if ($skipDirs.Contains($entry.Name)) { continue }
-            $dirNode = $Parent.AddNode("[bold blue]$($entry.Name)/[/]")
+            $dirNode = $Parent.AddNode("blue]$($entry.Name)/[/]")
             # Recurse via the script-block so we capture $skipDirs / $maxDepth / $fileGlyphs
             & $populate $dirNode $entry ($Depth + 1)
-          } else {
+          }
+          else {
             $key = [IO.Path]::GetExtension($entry.Name).ToLowerInvariant()
             if (-not $fileGlyphs.ContainsKey($key)) { $key = $entry.Name.ToLowerInvariant() }
             $glyph = if ($fileGlyphs.ContainsKey($key)) { $fileGlyphs[$key] } else { '' }
@@ -568,7 +582,8 @@ class PsModule : IDisposable {
 
       [BuildLog]::WriteStep("Module directory tree")
       [AnsiConsole]::Console.Write($tree)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("ShowModuleDirTree failed: $($_ | Format-List * -Force | Out-String)")
     }
   }
@@ -603,7 +618,8 @@ class PsModule : IDisposable {
     foreach ($r in $results) {
       if (!$r.Success) {
         $success = $false
-      } elseif ($null -ne $r.Output -and $r.Output.FailedCount -gt 0) {
+      }
+      elseif ($null -ne $r.Output -and $r.Output.FailedCount -gt 0) {
         $success = $false
       }
     }
@@ -615,7 +631,8 @@ class PsModule : IDisposable {
   [void] Publish($repoName, $repoPath) {
     if (Test-Path -Type Container -Path $repoPath -ErrorAction SilentlyContinue) {
       throw ""
-    } else {
+    }
+    else {
       New-Item -Path $repoPath -ItemType Directory | Out-Null
     }
     $this.Save()
@@ -641,7 +658,8 @@ class PsModule : IDisposable {
       [version]$version = ($file).ModuleVersion
       [version]$newVersion = "{ 0 }.{ 1 }.{ 2 }" -f $version.Major, $version.Minor, ($version.Build + 1)
       Update-ModuleManifest -Path "$((Join-Path $Path $moduleName)).psd1" -FunctionsToExport $functions -ModuleVersion $newVersion;
-    } else {
+    }
+    else {
       Update-ModuleManifest -Path "$((Join-Path $Path $moduleName)).psd1" -FunctionsToExport $functions;
     }
     Publish-Module -Path $Path -NuGetApiKey $ApiKey;
@@ -715,7 +733,8 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
       $m = Import-Module -Name $path -Force -PassThru
       if ($m) { $m.PsObject.Properties.Name.ForEach({ $this.$($_) = $m.$($_) }) }
       return $?
-    } catch {
+    }
+    catch {
       Write-Error "Failed to import module: $_"
       return $false
     }
@@ -770,7 +789,8 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
           $_analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings $frmtSettings -ErrorAction Stop
           if ($null -ne $_analysis) { $errorCount++; [void]$results.Analysis.Add(($_analysis | Select-Object ScriptName, Line, Message)) }
           break
-        } catch {
+        }
+        catch {
           [BuildLog]::WriteWarning("Invoke-ScriptAnalyzer failed on $($file.FullName). Error:")
           $results.Errors += [PSCustomObject]@{
             File      = $File.FullName
@@ -791,14 +811,16 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
           $_versionTable = Get-Variable PSVersionTable -ValueOnly
           $module_folder = if ($_versionTable.ContainsKey('PSEdition') -and $_versionTable.PSEdition -eq 'Core') { 'PowerShell' } else { 'WindowsPowerShell' }
           Join-Path -Path $([System.Environment]::GetFolderPath('MyDocuments')) -ChildPath $module_folder
-        } else {
+        }
+        else {
           Split-Path -Path ([Platform]::SelectProductNameForDirectory('USER_MODULES')) -Parent
         }
       ), 'Modules'
     )
     if (![string]::IsNullOrWhiteSpace($ReqVersion)) {
       return [IO.Path]::Combine($p.FullName, $Name, $ReqVersion)
-    } else {
+    }
+    else {
       return [IO.Path]::Combine($p.FullName, $Name)
     }
   }
@@ -807,10 +829,12 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     try {
       if ($Version -eq 'latest') {
         Update-Module -Name $moduleName
-      } else {
+      }
+      else {
         Update-Module -Name $moduleName -RequiredVersion $Version
       }
-    } catch {
+    }
+    catch {
       if ($ret -lt 1 -and $_.ErrorRecord.Exception.Message -eq "Module '$moduleName' was not installed by using Install-Module, so it cannot be updated.") {
         Get-Module $moduleName | Remove-Module -Force -ErrorAction Ignore; $ret++
         # TODO: fIX THIS mess by using: Invoke-RetriableCommand function
@@ -825,7 +849,8 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     if ($IsPester) { [void][PsCraft]::RemoveOld($moduleName) }
     if ($Version -eq 'latest') {
       Install-Module -Name $moduleName -SkipPublisherCheck:$IsPester
-    } else {
+    }
+    else {
       Install-Module -Name $moduleName -RequiredVersion $Version -SkipPublisherCheck:$IsPester
     }
   }
@@ -836,7 +861,8 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
       $success += $old.ForEach({
           try {
             Remove-Module $_ -Force -Verbose:$false -ErrorAction Ignore; Remove-Item $_ -Recurse -Force -ea Ignore
-          } catch {
+          }
+          catch {
             [BuildLog]::WriteWarning("Failed to remove module: $($_ | Format-List * -Force | Out-String)")
           }
           [IO.Directory]::Exists("$_")
@@ -891,11 +917,13 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
     if ($Code | Test-Path -ErrorAction SilentlyContinue) {
       Write-Debug "      Parse Code as Path"
       $AST = [System.Management.Automation.Language.Parser]::ParseFile(($Code | Convert-Path), [ref]$Tokens, [ref]$ParseErrors)
-    } elseif ($Code -is [System.Management.Automation.FunctionInfo]) {
+    }
+    elseif ($Code -is [System.Management.Automation.FunctionInfo]) {
       Write-Debug "      Parse Code as Function"
       $String = "function $($Code.Name) {`n$($Code.Definition)`n}"
       $AST = [System.Management.Automation.Language.Parser]::ParseInput($String, [ref]$Tokens, [ref]$ParseErrors)
-    } else {
+    }
+    else {
       Write-Debug "      Parse Code as String"
       $AST = [System.Management.Automation.Language.Parser]::ParseInput([String]$Code, [ref]$Tokens, [ref]$ParseErrors)
     }
@@ -969,7 +997,8 @@ class BuildOrchestrator : PsCraft {
       if ([string]::IsNullOrWhiteSpace($runId)) { $runId = 'build' }
       $this._logger.AddLogAppender([JsonAppender]::new([IO.Path]::Combine($this._logDir, "build-$runId.json")))
       # $this._logger.LogType = [BuildLogEntry]  # Requires BuildLogEntry : LogEntry (see class comment above)
-    } catch {
+    }
+    catch {
       $this._logger = [NullLogger]::new()
     }
   }
@@ -980,7 +1009,8 @@ class BuildOrchestrator : PsCraft {
         $this._logger.LogInfoLine("Build session ended.")
         $this._logger.Dispose()
       }
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Error disposing logger: $($_ | Format-List * -Force | Out-String)")
     }
     try { $this._runner = $null } catch { $null }
@@ -1029,7 +1059,8 @@ class BuildOrchestrator : PsCraft {
         }
         $this.ModuleType = 'Manifest'
         return
-      } catch {
+      }
+      catch {
         [BuildLog]::WriteSevere("Error importing manifest file: $($_ | Format-List * -Force | Out-String)")
       }
     }
@@ -1109,11 +1140,13 @@ class BuildOrchestrator : PsCraft {
 
         [BuildLog]::WriteStatus("Script module compiled successfully", 'success')
         return $true
-      } else {
+      }
+      else {
         [BuildLog]::WriteSevere("Module manifest file not found: $($ModuleManifest.FullName)")
         return $false
       }
-    } catch {
+    }
+    catch {
       $this._logger.LogFatalLine("Step failed: $($_.Exception.Message)", $_.Exception)
       [BuildLog]::WriteSevere("Error during script module compilation: $($_ | Format-List * -Force | Out-String)")
       return $false
@@ -1135,7 +1168,8 @@ class BuildOrchestrator : PsCraft {
     try {
       $dotnetVer = dotnet --version 2>&1
       [BuildLog]::WriteStatus("Using dotnet $dotnetVer", 'success')
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteSevere(".NET SDK is not installed or not in PATH. Required for binary module compilation.")
       return $false
     }
@@ -1188,7 +1222,8 @@ class BuildOrchestrator : PsCraft {
 
       [BuildLog]::WriteStatus("Binary module compiled successfully", 'success')
       return $true
-    } catch {
+    }
+    catch {
       $this._logger.LogFatalLine("Step failed: $($_.Exception.Message)", $_.Exception)
       [BuildLog]::WriteSevere("Error during binary module compilation: $($_ | Format-List * -Force | Out-String)")
       return $false
@@ -1234,11 +1269,13 @@ class BuildOrchestrator : PsCraft {
 
         [BuildLog]::WriteStatus("CIM module compiled successfully", 'success')
         return $true
-      } else {
+      }
+      else {
         [BuildLog]::WriteSevere("Module manifest file not found: $($ModuleManifest.FullName)")
         return $false
       }
-    } catch {
+    }
+    catch {
       $this._logger.LogFatalLine("Step failed: $($_.Exception.Message)", $_.Exception)
       [BuildLog]::WriteSevere("Error during CIM module compilation: $($_ | Format-List * -Force | Out-String)")
       return $false
@@ -1284,11 +1321,13 @@ class BuildOrchestrator : PsCraft {
 
         [BuildLog]::WriteStatus("Manifest module compiled successfully", 'success')
         return $true
-      } else {
+      }
+      else {
         [BuildLog]::WriteSevere("Module manifest file not found: $($ModuleManifest.FullName)")
         return $false
       }
-    } catch {
+    }
+    catch {
       $this._logger.LogFatalLine("Step failed: $($_.Exception.Message)", $_.Exception)
       [BuildLog]::WriteSevere("Error during Manifest module compilation: $($_ | Format-List * -Force | Out-String)")
       return $false
@@ -1300,7 +1339,8 @@ class BuildOrchestrator : PsCraft {
     try {
       $fig = [FigletText]::new([FigletFont]'DEFAULT_3D', 'PsCraft')
       [AnsiConsole]::Console.Write($fig)
-    } catch {
+    }
+    catch {
       Write-Host '=== PsCraft ===' -ForegroundColor Cyan
     }
   }
@@ -1332,7 +1372,8 @@ class BuildOrchestrator : PsCraft {
           $ctx.Status = '[green]Package feeds ready[/]'
         }
       )
-    } catch {
+    }
+    catch {
       # Fallback to original implementation
       $PackageProviders = Get-PackageProvider -ListAvailable -ea Ignore -Verbose:$false
       @('NuGet', 'PowerShellGet') | ForEach-Object {
@@ -1358,7 +1399,8 @@ class BuildOrchestrator : PsCraft {
     }
     $IsConnected = $( try {
         [Net.NetworkInformation.Ping]::new().Send('www.powershellgallery.com').Status -eq [Net.NetworkInformation.IPStatus]::Success
-      } catch { $false }
+      }
+      catch { $false }
     )
 
     [BuildLog]::WriteStep("Resolving build dependencies (parallel)...")
@@ -1379,13 +1421,15 @@ class BuildOrchestrator : PsCraft {
               }
             }
           )
-        } catch {
+        }
+        catch {
           foreach ($name in $missingMods) {
             [BuildLog]::WriteStatus("Installing module: $name", 'info')
             Install-Module -Name $name -Verbose:$false -Scope CurrentUser -Force -ea Continue
           }
         }
-      } else {
+      }
+      else {
         [BuildLog]::WriteWarning("Offline. Cannot install missing modules: $($missingMods -join ', ')")
       }
     }
@@ -1428,21 +1472,25 @@ class BuildOrchestrator : PsCraft {
           $out = $result.Output
           if ($out.Installed) {
             $results.Installed += $out.Name
-          } else {
+          }
+          else {
             $results.Missing += $out.Name
           }
-        } else {
+        }
+        else {
           $results.Failed += $result.Name
         }
       }
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteSevere("$($_ | Format-List * -Force | Out-String)")
       # ThreadRunner unavailable — fall back to sequential
       [BuildLog]::WriteWarning("ThreadRunner unavailable; using sequential checks")
       foreach ($moduleName in $this.RequiredModules) {
         if (Get-Module -Name $moduleName -ListAvailable -Verbose:$false -ErrorAction Ignore) {
           $results.Installed += $moduleName
-        } else {
+        }
+        else {
           $results.Missing += $moduleName
         }
       }
@@ -1482,7 +1530,8 @@ class BuildOrchestrator : PsCraft {
           }
         }
       }
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteSevere("$($_ | Format-List * -Force | Out-String)")
       # ThreadRunner unavailable — fall back to sequential copy
       [BuildLog]::WriteWarning("ThreadRunner unavailable; using sequential file copy")
@@ -1512,7 +1561,8 @@ class BuildOrchestrator : PsCraft {
       try {
         $manifest = Import-PowerShellDataFile -Path $psd1Path -ErrorAction Ignore
         if ($manifest.ModuleVersion) { $buildNumber = $manifest.ModuleVersion }
-      } catch {
+      }
+      catch {
         $null = $this.Cmdlet.WriteWarning("Failed to read module version from manifest: $_. Using default 0.0.0")
       }
     }
@@ -1528,15 +1578,17 @@ class BuildOrchestrator : PsCraft {
     try {
       [AnsiConsole]::Progress().Start([Action[object]] {
           param($ctx)
-          $cleanTask = $ctx.AddTask('[cyan]Clean[/]', $true, 100)
-          $compileTask = $ctx.AddTask('[cyan]Compile[/]', $true, 100)
-          $testTask = $ctx.AddTask('[cyan]Test[/]', $true, 100)
+          $cleanTask = $ctx.AddTask('[cyan1]Clean[/]', $true, 100)
+          $compileTask = $ctx.AddTask('[cyan1]Compile[/]', $true, 100)
+          $testTask = $ctx.AddTask('[cyan1]Test[/]', $true, 100)
 
           if ('Clean' -in $tasks) { $this.Clean(); $cleanTask.Value = 100 }
           if ('Compile' -in $tasks) { $this.Compile(); $compileTask.Value = 100 }
           if ('Test' -in $tasks) { $this.Test(); $testTask.Value = 100 }
-        })
-    } catch {
+        }
+      )
+    }
+    catch {
       # Fallback: plain sequential execution with BuildLog step headers
       if ('Clean' -in $tasks) { [BuildLog]::WriteHeading('Clean'); $this.Clean() }
       if ('Compile' -in $tasks) { [BuildLog]::WriteHeading('Compile'); $this.Compile() }
@@ -1562,7 +1614,8 @@ class BuildOrchestrator : PsCraft {
     [BuildLog]::WriteEnvironmentSummary("Build $($success ? 'complete' : 'Failed')")
     $LocalPSRepo = if (!(Get-Variable -Name IsWindows -ea Ignore) -or $(Get-Variable IsWindows -ValueOnly)) {
       [IO.Path]::Combine([Environment]::GetEnvironmentVariable('UserProfile'), 'LocalPSRepo')
-    } else { [IO.Path]::Combine([Environment]::GetEnvironmentVariable('HOME'), 'LocalPSRepo') }
+    }
+    else { [IO.Path]::Combine([Environment]::GetEnvironmentVariable('HOME'), 'LocalPSRepo') }
 
     if ($success) {
       [BuildLog]::WriteHeading('Create a Local repository')
@@ -1584,7 +1637,8 @@ class BuildOrchestrator : PsCraft {
         }
         Publish-Module -Path $ModulePath -Repository LocalPSRepo -Verbose:$false
         Install-Module $ModuleName -Repository LocalPSRepo -Force -Verbose:$false
-      } else {
+      }
+      else {
         $this.Cmdlet.ThrowTerminatingError([System.Management.Automation.ErrorRecord]::new([Exception]::new('Failed to create LocalPsRepo'), 'LocalPsRepo_NOT_FOUND', 'ObjectNotFound', $LocalPSRepo))
       }
     }
@@ -1626,7 +1680,8 @@ class BuildOrchestrator : PsCraft {
         [void]$table.AddRow(@($t.Name, "$($t.Description)", "$($t.DependsOn -join ', ')"))
       }
       [AnsiConsole]::Console.Write($table)
-    } catch {
+    }
+    catch {
       Get-PSakeScriptTasks -BuildFile $buildFile | Sort-Object Name | Format-Table Name, Description, DependsOn -AutoSize
     }
   }
