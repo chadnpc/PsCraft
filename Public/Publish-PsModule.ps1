@@ -28,11 +28,7 @@ function Publish-PsModule {
   process {
     $Module = [PsModule]::Create($Name, $ModulePath)
     if ($PSCmdlet.ShouldProcess('', '', "Publishing")) {
-      $Module.Publish()
+      return $Module.Publish()
     }
-  }
-
-  end {
-    return $Module
   }
 }
