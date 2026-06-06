@@ -31,11 +31,10 @@ Describe "Module Types: PsCraft" {
         $module.Save()
 
         $moduleFolderPath = [IO.Path]::Combine($modulePath, $moduleName)
-        
         # Verify Manifest-specific files
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1") | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1")) | Should -Be $true
         # Verify NO .psm1 is created for Manifest module
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, "$moduleName.psm1") | Should -Be $false
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, "$moduleName.psm1")) | Should -Be $false
       } finally {
         Pop-Location
       }
@@ -54,11 +53,10 @@ Describe "Module Types: PsCraft" {
         $module.Save()
 
         $moduleFolderPath = [IO.Path]::Combine($modulePath, $moduleName)
-        
         # Verify Binary-specific files
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1") | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'src', "$moduleName.csproj") | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'src', "GetInfoCmdlet.cs") | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1")) | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, 'src', "$moduleName.csproj")) | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, 'src', "GetInfoCmdlet.cs")) | Should -Be $true
       } finally {
         Pop-Location
       }
@@ -77,10 +75,9 @@ Describe "Module Types: PsCraft" {
         $module.Save()
 
         $moduleFolderPath = [IO.Path]::Combine($modulePath, $moduleName)
-        
         # Verify Cim-specific files
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1") | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'Cim', "$moduleName.cdxml") | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1")) | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, 'Cim', "$moduleName.cdxml")) | Should -Be $true
       } finally {
         Pop-Location
       }
