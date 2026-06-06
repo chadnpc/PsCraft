@@ -647,9 +647,10 @@ class PsModule : IDisposable {
     }
     return $success
   }
-  [BuildOrchestrator] Build() {
-    $orchestrator = [BuildOrchestrator]::new($this.Path, "Compile", $this.data.RequiredModules, $PSCmdlet)
-    return $orchestrator
+  [int] Build() {
+    $TaskList = @("Compile")
+    $orchestrator = [BuildOrchestrator]::new($this.Path, $TaskList, $this.data.RequiredModules, $PSCmdlet)
+    return $orchestrator.Run($orchestrator.TaskList)
   }
   [void] Publish() {
     $this.Publish('LocalRepo', [IO.DirectoryInfo]::new((Get-Location).Path))
