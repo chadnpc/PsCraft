@@ -539,38 +539,74 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
     }
   }
   static [object] ReplaceTemplates([object]$data) {
-    $templates = $data.Where({ $_.Type.Name -in ("String", "ScriptBlock") })
-    $hashtable = @{}; $data.Foreach({ $hashtable += @{ $_.Key = $_.Value } }); $keys = $hashtable.Keys
+    # Normalize input: accept either a dictionary (PsModuleData / hashtable)
+    # directly, or an array/collection whose first dictionary element is used.
+    # The previous implementation iterated the *array* with .Foreach(), which
+    # made $_ be the dictionary itself (no .Key / .Value), producing the
+    # "A null key is not allowed in a hash literal" error.
+    $dict = $null
+    if ($data -is [System.Collections.IDictionary]) {
+      $dict = $data
+    } elseif ($null -ne $data -and $data -isnot [string] -and $data -is [System.Collections.IEnumerable]) {
+      foreach ($x in $data) {
+        if ($x -is [System.Collections.IDictionary]) { $dict = $x; break }
+      }
+    }
+    if ($null -eq $dict) {
+      [BuildLog]::WriteWarning("ReplaceTemplates: input is not a dictionary; nothing to replace.")
+      return $data
+    }
+
+    # Snapshot all entries into a plain hashtable used as the placeholder
+    # lookup table. Skip entries with a null key to stay safe.
+    $hashtable = @{}
+    foreach ($entry in $dict.GetEnumerator()) {
+      if ($null -eq $entry.Key) { continue }
+      $hashtable[$entry.Key] = $entry.Value
+    }
+    $keys = @($hashtable.Keys)
+
+    # Collect template entries: values that are strings or scriptblocks
+    # potentially containing <Key> placeholder tokens.
+    $templates = [System.Collections.Generic.List[object]]::new()
+    foreach ($entry in $dict.GetEnumerator()) {
+      if ($null -eq $entry.Key -or $null -eq $entry.Value) { continue }
+      $vt = $entry.Value.GetType().Name
+      if ($vt -in ('String', 'ScriptBlock')) {
+        [void]$templates.Add(([PSCustomObject]@{ Key = $entry.Key; Type = $vt }))
+      }
+    }
+
     foreach ($item in $templates) {
       [string]$n = $item.Key
-      [string]$t = $item.Type.Name
+      [string]$t = $item.Type
       if ([string]::IsNullOrWhiteSpace($n)) { [BuildLog]::WriteWarning("`$item.Key is empty"); continue }
-      if ([string]::IsNullOrWhiteSpace($t)) { [BuildLog]::WriteWarning("`$item.Type.Name is empty"); continue }
+      if ([string]::IsNullOrWhiteSpace($t)) { [BuildLog]::WriteWarning("`$item.Type is empty"); continue }
       switch ($t) {
         'ScriptBlock' {
           if ($null -eq $hashtable[$n]) { break }
           $str = $hashtable[$n].ToString()
-          $keys.ForEach({
-              if ($str -match "<$_>") {
-                $str = $str.Replace("<$_>", $hashtable["$_"])
-                $item[$n] = [scriptblock]::Create($str)
-                Write-Debug "`$module.data.$($item.Key) Replaced <$_>)"
-              }
+          foreach ($k in $keys) {
+            if ($str -match "<$k>") {
+              $repl = if ($null -ne $hashtable[$k]) { "$($hashtable[$k])" } else { '' }
+              $str = $str.Replace("<$k>", $repl)
+              $dict[$n] = [scriptblock]::Create($str)
+              Write-Debug "`$module.data.$n Replaced <$k>"
             }
-          )
+          }
           break
         }
         'String' {
           if ($null -eq $hashtable[$n]) { break }
-          $str = $hashtable[$n]
-          $keys.ForEach({
-              if ($str -match "<$_>") {
-                $str = $str.Replace("<$_>", $hashtable["$_"])
-                $item[$n] = $str
-                Write-Debug "`$module.data.$($item.Key) Replaced <$_>"
-              }
+          $str = [string]$hashtable[$n]
+          foreach ($k in $keys) {
+            if ($str -match "<$k>") {
+              $repl = if ($null -ne $hashtable[$k]) { "$($hashtable[$k])" } else { '' }
+              $str = $str.Replace("<$k>", $repl)
+              $dict[$n] = $str
+              Write-Debug "`$module.data.$n Replaced <$k>"
             }
-          )
+          }
           break
         }
         default {
@@ -579,7 +615,7 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
         }
       }
     }
-    return $data
+    return $dict
   }
   [string] GetModuleroot([IO.DirectoryInfo]$Path) {
     [string]$mroot = switch ($true) {
