@@ -174,7 +174,7 @@ class BuildLog {
     if ($Passthru) { return $msg }
     try {
       $rule = [Rule]::new($msg)
-      $rule.Alignment = 'Left'
+      $rule.Justification = 'Left'
       [AnsiConsole]::Console.Write($rule)
     }
     catch {
