@@ -88,7 +88,8 @@ class BuildLog {
     $build_date = if ([string]::IsNullOrWhiteSpace($buildstart)) { Get-Date } else { Get-Date $buildstart }
     $elapse_msg = if ([bool][int]$env:IsCI) {
       "𓉘 + $(((Get-Date) - $build_date).ToString())𓉝"
-    } else {
+    }
+    else {
       "𓉘$((Get-Date).ToString("HH:mm:ss")) + $(((Get-Date) - $build_date).ToString())𓉝"
     }
     return "$elapse_msg$(' ' * [Math]::Abs((30 - $elapse_msg.Length)))"
@@ -123,7 +124,8 @@ class BuildLog {
     try {
       [AnsiConsole]::Console.MarkupLine("[$color]$Message[/]")
       return
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       Write-Host $Message
     }
@@ -158,7 +160,8 @@ class BuildLog {
     try {
       [AnsiConsole]::Console.Markup("[$color]$prefix[/] ")
       [AnsiConsole]::Console.MarkupLine($text)
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       Write-Host $text -ForegroundColor Red
     }
@@ -174,7 +177,8 @@ class BuildLog {
       $rule = [Rule]::new($msg)
       $rule.Alignment = 'Left'
       [AnsiConsole]::Console.Write($rule)
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       $elapsed = [BuildLog]::GetElapsed()
       [BuildLog]::WriteStatus("$elapsed $Title", 'success')
@@ -186,7 +190,8 @@ class BuildLog {
     try {
       $fig = [FigletText]::new([FigletFont]'DEFAULT_3D', $Title)
       [AnsiConsole]::Console.Write($fig)
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       [BuildLog]::WriteStatus("=== $Title ===", 'info')
     }
@@ -205,31 +210,31 @@ class BuildLog {
       $grid.AddColumn() | Out-Null
       $grid.AddColumn() | Out-Null
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]Project[/]'),
+          [Markup]::new('[bold cyan1]Project[/]'),
           [Markup]::new($($projectName ?? '[grey]Unknown[/]'))
         ))
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]State[/]'),
+          [Markup]::new('[bold cyan1]State[/]'),
           [Markup]::new($($State ?? '[grey]N/A[/]'))
         ))
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]Build Number[/]'),
+          [Markup]::new('[bold cyan1]Build Number[/]'),
           [Markup]::new($($buildNumber ?? '[grey]N/A[/]'))
         ))
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]Engine[/]'),
+          [Markup]::new('[bold cyan1]Engine[/]'),
           [Markup]::new($("PowerShell $engineVersion"))
         ))
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]Host OS[/]'),
+          [Markup]::new('[bold cyan1]Host OS[/]'),
           [Markup]::new($($hostOS))
         ))
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]Project Path[/]'),
+          [Markup]::new('[bold cyan1]Project Path[/]'),
           [Markup]::new($($projectPath ?? '[grey]Unknown[/]'))
         ))
       [void]$grid.AddRow(@(
-          [Markup]::new('[bold cyan]Build Output[/]'),
+          [Markup]::new('[bold cyan1]Build Output[/]'),
           [Markup]::new($($buildOutput ?? '[grey]Unknown[/]'))
         ))
 
@@ -246,7 +251,8 @@ class BuildLog {
         $varsPanel.Header = [PanelHeader]::new('Selected Environment Variables')
         [AnsiConsole]::Console.Write($varsPanel)
       }
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       [BuildLog]::WriteHeading('Build Environment Summary')
       if ($projectName) { [BuildLog]::WriteStatus("Project : $projectName", 'info') }
@@ -272,7 +278,8 @@ class BuildLog {
     )
     if ($null -eq $Caller) {
       throw $errorRecord
-    } else {
+    }
+    else {
       $Caller.ThrowTerminatingError($errorRecord)
     }
   }
@@ -281,7 +288,8 @@ class BuildLog {
     try {
       $commandText = $ScriptBlock.ToString() -join "`n"
       [AnsiConsole]::Console.MarkupLine("[magenta3][bold]PS > [/][/][grey]$commandText[/]")
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       [BuildLog]::WriteCmd($ScriptBlock.ToString() -join "`n")
     }
@@ -383,13 +391,15 @@ class BuildSummary {
             $chart.AddItem('[yellow]Skipped[/]', $this.TestResults.Skipped, [Color]::Yellow)
           }
           [AnsiConsole]::Console.Write($chart)
-        } catch {
+        }
+        catch {
           Write-Warning "Chart rendering failed! $($_ | Format-List * -Force | Out-String)"
           # Chart rendering failed, just show text summary
           [BuildLog]::WriteStatus("Test Results: $($this.TestResults.Passed) passed, $($this.TestResults.Failed) failed, $($this.TestResults.Skipped) skipped", 'default')
         }
       }
-    } catch {
+    }
+    catch {
       Write-Host "$($_ | Format-List * -Force | Out-String)" -f Yellow
       # Fallback to simple text output
       [BuildLog]::WriteHeading("Build Summary - $($this.ProjectName) v$($this.BuildNumber)")
