@@ -565,11 +565,11 @@ class PsModule : IDisposable {
       '.md'        = '🗎'
       '.txt'       = '📄'
       '.json'      = '🖺'
-      '.yml'       = '🖺'
-      '.yaml'      = '🖺'
+      '.yml'       = ''
+      '.yaml'      = ''
       '.xml'       = '🗎'
       '.cdxml'     = '🗎'
-      '.gitignore' = '🖺'
+      '.gitignore' = ''
       'license'    = '📜'
     }
 
