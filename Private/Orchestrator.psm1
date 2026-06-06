@@ -488,10 +488,10 @@ class PsModule : IDisposable {
     }
     else {
       # Fallback checks on folders
-      if (Test-Path -Path [IO.Path]::Combine($Path.FullName, "src") -PathType Container) {
+      if ([IO.Directory]::Exists([IO.Path]::Combine($Path.FullName, "src"))) {
         $type = [System.Management.Automation.ModuleType]::Binary
       }
-      elseif (Test-Path -Path [IO.Path]::Combine($Path.FullName, "Cim") -PathType Container) {
+      elseif ([IO.Directory]::Exists([IO.Path]::Combine($Path.FullName, "Cim"))) {
         $type = [System.Management.Automation.ModuleType]::Cim
       }
     }
@@ -1585,7 +1585,9 @@ class BuildOrchestrator : PsCraft {
     # Export context to environment for PSake script block compatibility
     $this.Context.ExportToEnvironment()
   }
-
+  [int] Run() {
+    return $this.Run($this.TaskList)
+  }
   [int] Run([string[]]$tasks) {
     # Initialize the build context with version info
     $psd1Path = [IO.Path]::Combine($this.Path, "$([IO.DirectoryInfo]::new($this.Path).BaseName).psd1")
