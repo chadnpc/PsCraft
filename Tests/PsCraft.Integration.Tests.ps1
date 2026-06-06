@@ -61,14 +61,14 @@ Describe "Integration tests: PsCraft" {
 
         # Assert - Check that folders exist
         $moduleFolderPath = [IO.Path]::Combine($modulePath, $moduleName)
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'Public') | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'Private') | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'Tests') | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, 'en-US') | Should -Be $true
+        [IO.Directory]::Exists([IO.Path]::Combine($moduleFolderPath, 'Public')) | Should -Be $true
+        [IO.Directory]::Exists([IO.Path]::Combine($moduleFolderPath, 'Private')) | Should -Be $true
+        [IO.Directory]::Exists([IO.Path]::Combine($moduleFolderPath, 'Tests')) | Should -Be $true
+        [IO.Directory]::Exists([IO.Path]::Combine($moduleFolderPath, 'en-US')) | Should -Be $true
 
         # Assert - Check that manifest file exists
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1") | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($moduleFolderPath, "$moduleName.psm1") | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, "$moduleName.psd1")) | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($moduleFolderPath, "$moduleName.psm1")) | Should -Be $true
       } finally {
         Pop-Location
       }
@@ -133,7 +133,7 @@ Describe "Integration tests: PsCraft" {
 
         # Assert - Verify src folder and csproj exist
         Test-Path -Path $srcPath -PathType Container | Should -Be $true
-        Test-Path -Path [IO.Path]::Combine($srcPath, "$moduleName.csproj") | Should -Be $true
+        [IO.File]::Exists([IO.Path]::Combine($srcPath, "$moduleName.csproj")) | Should -Be $true
 
         # Verify csproj is valid XML
         $xml = [xml]::new()
@@ -169,7 +169,7 @@ namespace $moduleName
       Set-Content -Path [IO.Path]::Combine($srcPath, "GetInfoCmdlet.cs") -Value $templateContent
 
       # Assert - Verify file exists and contains expected content
-      Test-Path -Path [IO.Path]::Combine($srcPath, "GetInfoCmdlet.cs") | Should -Be $true
+      [IO.File]::Exists([IO.Path]::Combine($srcPath, "GetInfoCmdlet.cs")) | Should -Be $true
       $content = Get-Content -Path [IO.Path]::Combine($srcPath, "GetInfoCmdlet.cs") -Raw
       $content | Should -Match 'PSCmdlet'
       $content | Should -Match 'VerbsCommon.Get'
