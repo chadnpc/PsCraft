@@ -50,6 +50,8 @@ function Build-Module {
 
   process {
     $orchestrator = [BuildOrchestrator]::new($Path, $Task, $RequiredModules, $PSCmdlet)
-    return $orchestrator.Run($Task)
+    if ($PSCmdlet.ShouldProcess("$Path", "Build module ($($Task -join ', '))")) {
+      return $orchestrator.Run($Task)
+    }
   }
 }
