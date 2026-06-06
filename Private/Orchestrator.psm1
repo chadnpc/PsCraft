@@ -518,21 +518,21 @@ class PsModule : IDisposable {
 
     # Plain-unicode glyphs for common file types (safe in any modern terminal)
     $fileGlyphs = @{
-      '.ps1'     = ''
-      '.psm1'    = ''
-      '.psd1'    = ''
-      '.cs'      = ''
-      '.csproj'  = ''
-      '.sln'     = ''
-      '.md'      = ''
-      '.txt'     = ''
-      '.json'    = ''
-      '.yml'     = ''
-      '.yaml'    = ''
-      '.xml'     = ''
-      '.cdxml'   = ''
+      '.ps1'       = ''
+      '.psm1'      = ''
+      '.psd1'      = ''
+      '.cs'        = ''
+      '.csproj'    = ''
+      '.sln'       = ''
+      '.md'        = ''
+      '.txt'       = ''
+      '.json'      = ''
+      '.yml'       = ''
+      '.yaml'      = ''
+      '.xml'       = ''
+      '.cdxml'     = ''
       '.gitignore' = ''
-      'license'  = ''
+      'license'    = ''
     }
 
     try {
