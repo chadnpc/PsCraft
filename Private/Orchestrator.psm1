@@ -435,7 +435,10 @@ class PsModule : IDisposable {
     if ($null -ne $tree) {
       [AnsiConsole]::Console.Write($tree)
     }
-    [BuildLog]::WriteStatus("Module files created", 'success')
+    else {
+      [BuildLog]::WriteWarning("GetDirTree() returned `$null")
+    }
+    [BuildLog]::WriteStatus("`nModule files created", 'success')
   }
   static [PsModule] Load([IO.DirectoryInfo]$Path) {
     [void][PsModuleBase]::validatePath($Path.FullName)
@@ -582,8 +585,6 @@ class PsModule : IDisposable {
       }
 
       & $populate $tree.Root ([IO.DirectoryInfo]::new($this.Path.FullName)) 0
-
-      [BuildLog]::WriteStep("Module directory tree")
     }
     catch {
       [BuildLog]::WriteWarning("GetDirTree failed: $($_ | Format-List * -Force | Out-String)")
