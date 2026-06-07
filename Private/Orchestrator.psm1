@@ -809,12 +809,12 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
       return $results
     }
     $filesToCheck = $module.Files.Value.Where({ $_.Extension -in ('.ps1', '.psd1', '.psm1') })
-    $frmtSettings = $module.Files.Where({ $_.Name -eq "ScriptAnalyzer" })[0].Value.FullName
+    $frmtSettings = $module.Files.Where({ $_.Name -eq "ScriptAnalyzer" })[0].Value
     if ($filesToCheck.Count -eq 0) {
       [BuildLog]::WriteStatus("No files to format found in the module!", 'warning')
       return $results
     }
-    if (!$frmtSettings) {
+    if (![IO.File]::Exists("$frmtSettings")) {
       [BuildLog]::WriteWarning("ScriptAnalyzer Settings not found in the module!")
       return $results
     }
@@ -822,9 +822,9 @@ class PsCraft : Microsoft.PowerShell.Commands.ModuleCmdletBase {
       for ($i = 0; $i -lt $maxRetries; $i++) {
         try {
           $_rcontent = Get-Content -Path $file.FullName -Raw
-          $formatted = Invoke-Formatter -ScriptDefinition $_rcontent -Settings $frmtSettings -Verbose:$false
+          $formatted = PSScriptAnalyzer\Invoke-Formatter -ScriptDefinition $_rcontent -Settings "$frmtSettings" -Verbose:$false
           $formatted | Set-Content -Path $file.FullName -NoNewline
-          $_analysis = Invoke-ScriptAnalyzer -Path $file.FullName -Settings $frmtSettings -ErrorAction Stop
+          $_analysis = PSScriptAnalyzer\Invoke-ScriptAnalyzer -Path $file.FullName -Settings "$frmtSettings" -ErrorAction Stop
           if ($null -ne $_analysis) { $errorCount++; [void]$results.Analysis.Add(($_analysis | Select-Object ScriptName, Line, Message)) }
           break
         } catch {
@@ -1090,7 +1090,6 @@ class BuildOrchestrator : PsCraft {
         [BuildLog]::WriteSevere("Error importing manifest file: $($_ | Format-List * -Force | Out-String)")
       }
     }
-
     # Default fallback
     $this.ModuleType = 'Script'
   }
@@ -1102,7 +1101,7 @@ class BuildOrchestrator : PsCraft {
         param($o) return [PsModule]::Load($o.value.Path).FormatCode()
       }, ([ref]$this)
     )
-    "-- Formatting results:" | Write-Host -f Yellow
+    "-- ScriptAnalyzer results:" | Write-Host -f Yellow
     $formatResult.Output | Format-List * | Out-String | Write-Host -f Yellow
     $success = switch ($this.ModuleType) {
       "Script" { $this.CompileScriptModule() ; break }
@@ -1134,7 +1133,7 @@ class BuildOrchestrator : PsCraft {
         }
       }
 
-      [BuildLog]::WriteStep("Copying script module files (parallel)...")
+      [BuildLog]::WriteStep("Create file templates")
       $this.CopyFilesParallel($filesToCopy, $versionDir, $this.GetCallbackScript('CopyFilesParallel'))
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
