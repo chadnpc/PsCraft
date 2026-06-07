@@ -662,8 +662,7 @@ class PsModule : IDisposable {
     return $success
   }
   [int] Build() {
-    $TaskList = @("Compile")
-    $orchestrator = [BuildOrchestrator]::new($this.Path, $TaskList, $this.data.RequiredModules, $PSCmdlet)
+    $orchestrator = $this.GetBuildOrchestrator(@("Compile"))
     return $orchestrator.Run($orchestrator.TaskList)
   }
   [void] Publish() {
@@ -711,6 +710,10 @@ class PsModule : IDisposable {
     }
     Publish-Module -Path $Path -NuGetApiKey $ApiKey;
     [BuildLog]::WriteStatus("Module $moduleName Published", 'success');
+  }
+  [BuildOrchestrator] GetBuildOrchestrator([string[]]$TaskList) {
+    [validateNotNullOrEmpty()][string[]]$TaskList = $TaskList
+    return [BuildOrchestrator]::new($this.Path, $TaskList, $this.data.RequiredModules, $PSCmdlet)
   }
   [void] Dispose() {
     $this.Data = $null
