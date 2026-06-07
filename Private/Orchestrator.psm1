@@ -346,11 +346,11 @@ class PsModule : IDisposable {
       if ($null -ne $this.Data.defaults -and $this.Data.defaults.Count -gt 0) {
         $this.Data.defaults.GetDefaults().GetEnumerator().ForEach({
             $k = $_.Key; $v = $_.Value; $type = $v.GetType()
-            # Replace placeholder tokens with actual values
             $value_is_scriptblock = $v -is [scriptblock];
             $value_might_have_placeholders = $v -as [string] -is [string]
             if ($value_might_have_placeholders) {
               [string]$str = $v.ToString()
+              # Replace placeholder tokens with actual values
               $str = $str.Replace('<ModuleName>', $mName)
               $str = $str.Replace('{mName}', $mName)
               $str = $str.Replace('<ModuleVersion>', $this.Data['ModuleVersion'])
