@@ -345,7 +345,7 @@ class PsModule : IDisposable {
       [PsModuleData]::GetModuleSubFolders($mName, $mroot, $schema) | ForEach-Object { $this.Folders.Add($_) }
       if ($null -ne $this.Data.defaults -and $this.Data.defaults.Count -gt 0) {
         $this.Data.defaults.GetDefaults().GetEnumerator().ForEach({
-            $k = $_.Key; $v = $_.Value; $type = $v.GetType()
+            $k = $_.Key; $v = $_.Value; $valueType = $v.GetType()
             $value_is_scriptblock = $v -is [scriptblock];
             $value_might_have_placeholders = $v -as [string] -is [string]
             if ($value_might_have_placeholders) {
@@ -361,7 +361,7 @@ class PsModule : IDisposable {
               $str = $str.Replace('<Tags>', $this.Data['Tags'])
               $str = $str.Replace('<FunctionsToExport>', $this.Data['FunctionsToExport'])
               $str = $str.Replace('<ReleaseNotes>', $this.Data['ReleaseNotes'])
-              $v = $str -as $type
+              $v = $str -as $valueType
             }
             else {
               [BuildLog]::WriteWarning("Skipped replacing placeholders in key module.data.'$k' as it can not be converted to string")
