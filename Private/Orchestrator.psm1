@@ -378,22 +378,18 @@ class PsModule : IDisposable {
           }
         )
       }
-    }
-    catch {
+    } catch {
       [BuildLog]::WriteWarning("$($_ | Format-List * -Force | Out-String)")
     }
     # Lets Make sure Set required manifest fields that New-ModuleManifest always needs
     $this.Data['Path'] = [System.IO.Path]::Combine($mroot, "$mName.psd1")
     if ($Type -eq [System.Management.Automation.ModuleType]::Script) {
       $this.Data['RootModule'] = "$mName.psm1"
-    }
-    elseif ($Type -eq [System.Management.Automation.ModuleType]::Binary) {
+    } elseif ($Type -eq [System.Management.Automation.ModuleType]::Binary) {
       $this.Data['RootModule'] = "$mName.dll"
-    }
-    elseif ($Type -eq [System.Management.Automation.ModuleType]::Cim) {
+    } elseif ($Type -eq [System.Management.Automation.ModuleType]::Cim) {
       $this.Data['RootModule'] = "Cim/$mName.cdxml"
-    }
-    else {
+    } else {
       $this.Data['RootModule'] = ''
     }
     $this.Data['Author'] = PsModuleBase\Get-AuthorName
@@ -412,9 +408,8 @@ class PsModule : IDisposable {
   [void] Set([string]$Key, $Value) {
     $this.Data[$Key] = $Value
   }
-  [void] FormatCode() {
-    $type = [type]"PsCraft"
-    $type::FormatCode($this)
+  [PSCustomObject] FormatCode() {
+    return [PsCraft]::FormatCode($this)
   }
   [void] WritetoDisk([SaveOptions]$Options) {
     $Force = $Options -eq [SaveOptions]::None
@@ -459,7 +454,9 @@ class PsModule : IDisposable {
     [BuildLog]::WriteStatus("`nModule files created", 'success')
   }
   static [PsModule] Load([IO.DirectoryInfo]$Path) {
-    [void][PsModuleBase]::validatePath($Path.FullName)
+    if (![IO.Directory]::Exists($Path.FullName)) {
+      throw [System.IO.DirectoryNotFoundException]::new("Directory '$($Path.FullName)' was not found!")
+    }
     $psd1Files = Get-ChildItem -Path $Path.FullName -Filter "*.psd1" -ErrorAction Ignore
     if (!$psd1Files) {
       throw [System.IO.FileNotFoundException]::new("No .psd1 manifest file found in directory $($Path.FullName)")
@@ -485,20 +482,16 @@ class PsModule : IDisposable {
       $rootModuleStr = $rootModule -join ''
       if ($rootModuleStr -like "*.dll") {
         $type = [System.Management.Automation.ModuleType]::Binary
-      }
-      elseif ($rootModuleStr -like "*.cdxml") {
+      } elseif ($rootModuleStr -like "*.cdxml") {
         $type = [System.Management.Automation.ModuleType]::Cim
-      }
-      elseif ($rootModuleStr -like "*.psm1") {
+      } elseif ($rootModuleStr -like "*.psm1") {
         $type = [System.Management.Automation.ModuleType]::Script
       }
-    }
-    else {
+    } else {
       # Fallback checks on folders
       if ([IO.Directory]::Exists([IO.Path]::Combine($Path.FullName, "src"))) {
         $type = [System.Management.Automation.ModuleType]::Binary
-      }
-      elseif ([IO.Directory]::Exists([IO.Path]::Combine($Path.FullName, "Cim"))) {
+      } elseif ([IO.Directory]::Exists([IO.Path]::Combine($Path.FullName, "Cim"))) {
         $type = [System.Management.Automation.ModuleType]::Cim
       }
     }
@@ -605,8 +598,7 @@ class PsModule : IDisposable {
             $dirNode = $Parent.AddNode("[blue]$($entry.Name)[/]")
             # Recurse via the script-block so we capture $skipDirs / $maxDepth / $fileGlyphs
             & $populate $dirNode $entry ($Depth + 1)
-          }
-          else {
+          } else {
             $key = [IO.Path]::GetExtension($entry.Name).ToLowerInvariant()
             if (-not $fileGlyphs.ContainsKey($key)) { $key = $entry.Name.ToLowerInvariant() }
             $glyph = if ($fileGlyphs.ContainsKey($key)) { $fileGlyphs[$key] } else { '' }
@@ -615,10 +607,8 @@ class PsModule : IDisposable {
           }
         }
       }
-
       & $populate $tree.Root ([IO.DirectoryInfo]::new($this.Path.FullName)) 0
-    }
-    catch {
+    } catch {
       [BuildLog]::WriteWarning("GetDirTree failed: $($_ | Format-List * -Force | Out-String)")
     }
     return $tree
@@ -1117,8 +1107,7 @@ class BuildOrchestrator : PsCraft {
         }
         $this.ModuleType = 'Manifest'
         return
-      }
-      catch {
+      } catch {
         [BuildLog]::WriteSevere("Error importing manifest file: $($_ | Format-List * -Force | Out-String)")
       }
     }
@@ -1130,25 +1119,22 @@ class BuildOrchestrator : PsCraft {
   # ── Compilation dispatch and methods ─────────────────────────────────────────
   [bool] Compile() {
     [BuildLog]::WriteHeading("Compiling module type: $($this.ModuleType)")
-    $progressHelper = [type]"ProgressUtil"
-    $result = $progressHelper::WaitJob("Formatting module code", {
-        param($o)
-        $mod = [PsModule]::Load($o.value.Path)
-        $mod.FormatCode()
-        $success = switch ($o.value.ModuleType) {
-          "Script" { $o.value.CompileScriptModule() ; break }
-          "Binary" { $o.value.CompileBinaryModule() ; break }
-          "Cim" { $o.value.CompileCimModule() ; break }
-          "Manifest" { $o.value.CompileManifestModule() ; break }
-          default {
-            [BuildLog]::WriteSevere("Unknown ModuleType: $($o.value.ModuleType)")
-            $false
-          }
-        }
-        return $success
+    $formatResult = [ProgressUtil]::WaitJob("Formatting module code", {
+        param($o) return [PsModule]::Load($o.value.Path).FormatCode()
       }, ([ref]$this)
     )
-    return $result
+    $formatResult | Format-List * | Out-String | Write-Host
+    $success = switch ($this.ModuleType) {
+      "Script" { $this.CompileScriptModule() ; break }
+      "Binary" { $this.CompileBinaryModule() ; break }
+      "Cim" { $this.CompileCimModule() ; break }
+      "Manifest" { $this.CompileManifestModule() ; break }
+      default {
+        [BuildLog]::WriteSevere("Unknown ModuleType: $($this.ModuleType)")
+        $false
+      }
+    }
+    return $success
   }
 
   [bool] CompileScriptModule() {
