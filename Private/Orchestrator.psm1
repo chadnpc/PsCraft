@@ -665,7 +665,12 @@ class PsModule : IDisposable {
     return $this.Build(@("Compile"))
   }
   [int] Build([string[]]$TaskList) {
-    return $this.GetBuildOrchestrator($TaskList).Run()
+    $o = $this.GetBuildOrchestrator($TaskList)
+    if ($TaskList -contains "Compile") {
+      # banner only shows up durring the compiling step :)
+      $o::ShowBanner()
+    }
+    return $o.Run()
   }
   [void] Publish() {
     $this.Publish('LocalRepo', [IO.DirectoryInfo]::new((Get-Location).Path))
@@ -1165,7 +1170,7 @@ class BuildOrchestrator : PsCraft {
       }
 
       [BuildLog]::WriteStep("Copying script module files (parallel)...")
-      $this.CopyFilesParallel($filesToCopy, $versionDir, $null)
+      $this.CopyFilesParallel($filesToCopy, $versionDir, $this.GetCallbackScript('CopyFilesParallel'))
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
       $mod = [PsModule]::Load($this.Path)
@@ -1261,7 +1266,7 @@ class BuildOrchestrator : PsCraft {
           $filesToCopy += $p
         }
       }
-      $this.CopyFilesParallel($filesToCopy, $versionDir, $null)
+      $this.CopyFilesParallel($filesToCopy, $versionDir, $this.GetCallbackScript('CopyFilesParallel'))
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
       $ModuleManifest = [IO.FileInfo]::new([IO.Path]::Combine($versionDir, "$mName.psd1"))
@@ -1312,7 +1317,7 @@ class BuildOrchestrator : PsCraft {
       }
 
       [BuildLog]::WriteStep("Copying CIM module files (parallel)...")
-      $this.CopyFilesParallel($filesToCopy, $versionDir, $null)
+      $this.CopyFilesParallel($filesToCopy, $versionDir, $this.GetCallbackScript('CopyFilesParallel'))
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
       $ModuleManifest = [IO.FileInfo]::new([IO.Path]::Combine($versionDir, "$mName.psd1"))
@@ -1367,7 +1372,7 @@ class BuildOrchestrator : PsCraft {
       }
 
       [BuildLog]::WriteStep("Copying Manifest module files (parallel)...")
-      $this.CopyFilesParallel($filesToCopy, $versionDir, $null)
+      $this.CopyFilesParallel($filesToCopy, $versionDir, $this.GetCallbackScript('CopyFilesParallel'))
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
       $ModuleManifest = [IO.FileInfo]::new([IO.Path]::Combine($versionDir, "$mName.psd1"))
@@ -1406,13 +1411,8 @@ class BuildOrchestrator : PsCraft {
 
   # ── Banner ──────────────────────────────────────────────────────────────────
   static [void] ShowBanner() {
-    try {
-      $fig = [FigletText]::new([FigletFont]'DEFAULT_3D', 'PsCraft')
-      [AnsiConsole]::Console.Write($fig)
-    }
-    catch {
-      Write-Host '=== PsCraft ===' -ForegroundColor Cyan
-    }
+    $fig = [FigletText]::new([FigletFont]'DEFAULT_3D', 'PsCraft')
+    [AnsiConsole]::Console.Write($fig)
   }
 
   # ── Package feed bootstrap ──────────────────────────────────────────────────
@@ -1612,6 +1612,23 @@ class BuildOrchestrator : PsCraft {
     }
   }
 
+  [scriptblock] GetCallbackScript([string]$ActionName) {
+    # ActionName is the method name, so it should be a valid method name on this object
+    if (!$this.PsObject.Methods.Name.Contains($ActionName)) {
+      throw "Action '$ActionName' not found"
+    }
+    return @{
+      CopyFilesParallel    = {
+        # this callback will check if there are any empty directories in the destination path and adds a ".gitkeep" in each one of those.
+        param($source, $destination)
+        $emptyDirs = Get-ChildItem -Path $destination -Directory -Recurse | Where-Object { (Get-ChildItem -Path $_.FullName -File -ErrorAction Ignore).Count -eq 0 -and (Get-ChildItem -Path $_.FullName -Directory -ErrorAction Ignore).Count -eq 0 }
+        foreach ($emptyDir in $emptyDirs) {
+          Set-Content -Path (Join-Path -Path $emptyDir.FullName -ChildPath '.gitkeep') -Value ''
+        }
+      }
+      CheckModulesParallel = { }
+    }[$ActionName]
+  }
   # ── Dispatch ────────────────────────────────────────────────────────────────
   # Initialize build context with project-specific data and export to environment
   [void] InitializeBuildContext([version]$BuildNumber) {
