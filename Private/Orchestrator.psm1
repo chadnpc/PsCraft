@@ -320,78 +320,11 @@ class PsModule : IDisposable {
   }
 
   hidden [void] Init([string]$Name, [IO.DirectoryInfo]$Path, [System.Management.Automation.ModuleType]$Type) {
-    if ($null -ne [PsModule]::Config) {
-      # Config includes:
-      # - Build steps
-      # - Params ...
-    }
     $this.Name = [string]::IsNullOrWhiteSpace($Name) ? [IO.Path]::GetFileNameWithoutExtension([IO.Path]::GetRandomFileName()) : $Name
-    $mName = $this.Name
-    $mroot = $this.ResolveModuleRoot($Path)
-    [void][PsModuleBase]::validatePath($mroot); $this.Path = $mroot
+    $this.Path = $this.ResolveModuleRoot($Path)
     $this.Files = New-Object System.Collections.Generic.List[ModuleFile]
     $this.Folders = New-Object System.Collections.Generic.List[ModuleFolder]
-    try {
-      $this.Data = [PsModuleData]::new($this.Name, $Type, $this.Path)
-      $this.Data.Path = $this.Path
-      $schema = $this.Data.defaults.GetModuleSchema($mName, $Type)
-
-      [PsModuleData]::GetModuleFiles($mName, $mroot, $schema) | ForEach-Object { $this.Files.Add($_) }
-      [PsModuleData]::GetModuleSubFolders($mName, $mroot, $schema) | ForEach-Object { $this.Folders.Add($_) }
-      if ($null -ne $this.Data.defaults -and $this.Data.defaults.Count -gt 0) {
-        $this.Data.defaults.GetDefaults().GetEnumerator().ForEach({
-            $k = $_.Key; $v = $_.Value; $valueType = $v.GetType()
-            $value_is_scriptblock = $v -is [scriptblock];
-            $value_might_have_placeholders = $v -as [string] -is [string]
-            if ($value_might_have_placeholders) {
-              [string]$str = $v.ToString()
-              # Replace placeholder tokens with actual values
-              $str = $str.Replace('<ModuleName>', $mName)
-              $str = $str.Replace('{mName}', $mName)
-              $str = $str.Replace('<ModuleVersion>', $this.Data['ModuleVersion'])
-              $str = $str.Replace('<LicenseUri>', $this.Data['LicenseUri'])
-              $str = $str.Replace('<ProjectUri>', $this.Data['ProjectUri'])
-              $str = $str.Replace('<RepositoryUri>', $this.Data['RepositoryUri'])
-              $str = $str.Replace('<IconUri>', $this.Data['IconUri'])
-              $str = $str.Replace('<Tags>', $this.Data['Tags'])
-              $str = $str.Replace('<FunctionsToExport>', $this.Data['FunctionsToExport'])
-              $str = $str.Replace('<ReleaseNotes>', $this.Data['ReleaseNotes'])
-              $v = $str -as $valueType
-            }
-            else {
-              [BuildLog]::WriteWarning("Skipped replacing placeholders in key module.data.'$k' as it can not be converted to string")
-            }
-            # Set module data
-            if ($value_is_scriptblock) {
-              $this.Data[$k] = [scriptblock]::Create($str);
-            }
-            else {
-              $this.Data[$k] = $v
-            }
-          }
-        )
-      }
-    }
-    catch {
-      [BuildLog]::WriteWarning("$($_ | Format-List * -Force | Out-String)")
-    }
-    # Lets Make sure Set required manifest fields that New-ModuleManifest always needs
-    # $this.Data['Path'] = [System.IO.Path]::Combine($mroot, "$mName.psd1")
-    # if ($Type -eq [System.Management.Automation.ModuleType]::Script) {
-    #   $this.Data['RootModule'] = "$mName.psm1"
-    # }
-    # elseif ($Type -eq [System.Management.Automation.ModuleType]::Binary) {
-    #   $this.Data['RootModule'] = "$mName.dll"
-    # }
-    # elseif ($Type -eq [System.Management.Automation.ModuleType]::Cim) {
-    #   $this.Data['RootModule'] = "Cim/$mName.cdxml"
-    # }
-    # else {
-    #   $this.Data['RootModule'] = ''
-    # }
-    # $this.Data['Author'] = PsModuleBase\Get-AuthorName
-    # $this.Data['ModuleVersion'] = '0.0.1'
-    # $this.Data['Description'] = "A collection of script files by $(PsModuleBase\Get-AuthorName)"
+    $this.SetModuleData($this.GetModuleData($this.Name, $Type, $this.Path))
   }
   [void] Save() {
     $this.Save([SaveOptions]::None)
@@ -616,7 +549,6 @@ class PsModule : IDisposable {
     }
     return $tree
   }
-
   [bool] Test() {
     $testsDir = [IO.Path]::Combine($this.Path.FullName, "Tests")
     if (!(Test-Path $testsDir)) { return $true }
@@ -714,6 +646,56 @@ class PsModule : IDisposable {
   [BuildOrchestrator] GetBuildOrchestrator([string[]]$TaskList) {
     [validateNotNullOrEmpty()][string[]]$TaskList = $TaskList
     return [BuildOrchestrator]::new($this.Path, $TaskList, $this.data.RequiredModules, $PSCmdlet)
+  }
+  [PsModuleData] GetModuleData([string]$mName, [System.Management.Automation.ModuleType]$Type, [string]$mroot) {
+    $result = $null
+    try {
+      $result = [PsModuleData]::new($mName, $Type, $mroot)
+      $schema = $result.defaults.GetModuleSchema($mName, $Type)
+
+      [PsModuleData]::GetModuleFiles($mName, $mroot, $schema) | ForEach-Object { $result.Files.Add($_) }
+      [PsModuleData]::GetModuleSubFolders($mName, $mroot, $schema) | ForEach-Object { $result.Folders.Add($_) }
+      if ($null -ne $result.defaults -and $result.defaults.Count -gt 0) {
+        $result.defaults.GetDefaults().GetEnumerator().ForEach({
+            $k = $_.Key; $v = $_.Value; $valueType = $v.GetType()
+            $value_is_scriptblock = $v -is [scriptblock];
+            $value_might_have_placeholders = $v -as [string] -is [string]
+            if ($value_might_have_placeholders) {
+              [string]$str = $v.ToString()
+              # Replace placeholder tokens with actual values
+              $str = $str.Replace('<ModuleName>', $mName)
+              $str = $str.Replace('{mName}', $mName)
+              $str = $str.Replace('<ModuleVersion>', $result['ModuleVersion'])
+              $str = $str.Replace('<LicenseUri>', $result['LicenseUri'])
+              $str = $str.Replace('<ProjectUri>', $result['ProjectUri'])
+              $str = $str.Replace('<RepositoryUri>', $result['RepositoryUri'])
+              $str = $str.Replace('<IconUri>', $result['IconUri'])
+              $str = $str.Replace('<Tags>', $result['Tags'])
+              $str = $str.Replace('<FunctionsToExport>', $result['FunctionsToExport'])
+              $str = $str.Replace('<ReleaseNotes>', $result['ReleaseNotes'])
+              $v = $str -as $valueType
+            }
+            else {
+              [BuildLog]::WriteWarning("Skipped replacing placeholders in key module.data.'$k' as it can not be converted to string")
+            }
+            # Set module data
+            if ($value_is_scriptblock) {
+              $result[$k] = [scriptblock]::Create($str);
+            }
+            else {
+              $result[$k] = $v
+            }
+          }
+        )
+      }
+    }
+    catch {
+      [BuildLog]::WriteWarning("$($_ | Format-List * -Force | Out-String)")
+    }
+    return $result
+  }
+  [void] SetModuleData([PsModuleData]$data) {
+    $this.data = $data
   }
   [string] ResolveModuleRoot([IO.DirectoryInfo]$Path) {
     return $this.ResolveModuleRoot($this.Name, $Path)
