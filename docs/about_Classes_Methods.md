@@ -781,7 +781,7 @@ class PsModule : IDisposable {
     if (![IO.Directory]::Exists($d)) {
       return [PsModule]::new($d.BaseName, $d.Parent, $Type)
     }
-    [BuildLog]::Write("[WIP] Load Module from $p")
+    [BuildLog]::Write("Directory $d already exists, Loading module from $p`n")
     return [PsModule]::Load($d)
   }
 
