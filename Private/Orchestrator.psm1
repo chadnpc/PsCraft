@@ -1143,7 +1143,6 @@ class BuildOrchestrator : PsCraft {
       $versionDir = $this.Context.GetVersionedOutputPath()
 
       $this._logger.LogInfoLine("Compile started: $mName v$($this.Context.BuildNumber) -> $versionDir")
-
       New-Item -Path $versionDir -ItemType Directory -Force -ea Ignore | Out-Null
 
       $filesToCopy = @()
