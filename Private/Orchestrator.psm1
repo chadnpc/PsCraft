@@ -343,13 +343,14 @@ class PsModule : IDisposable {
 
       [PsModuleData]::GetModuleFiles($mName, $mroot, $schema) | ForEach-Object { $this.Files.Add($_) }
       [PsModuleData]::GetModuleSubFolders($mName, $mroot, $schema) | ForEach-Object { $this.Folders.Add($_) }
-      if ($null -ne $this.Data.defaults) {
+      if ($null -ne $this.Data.defaults -and $this.Data.defaults.Count -gt 0) {
         $this.Data.defaults.GetDefaults().GetEnumerator().ForEach({
-            $k = $_.Key; $v = $_.Value
+            $k = $_.Key; $v = $_.Value; $type = $v.GetType()
             # Replace placeholder tokens with actual values
-            $value_is_scriptblock = $v -is [scriptblock]
-            $str = $value_is_scriptblock ? $v.ToString() : $v
-            if ($str -as [string] -is [string]) {
+            $value_is_scriptblock = $v -is [scriptblock];
+            $value_might_have_placeholders = $v -as [string] -is [string]
+            if ($value_might_have_placeholders) {
+              [string]$str = $v.ToString()
               $str = $str.Replace('<ModuleName>', $mName)
               $str = $str.Replace('{mName}', $mName)
               $str = $str.Replace('<ModuleVersion>', $this.Data['ModuleVersion'])
@@ -360,15 +361,17 @@ class PsModule : IDisposable {
               $str = $str.Replace('<Tags>', $this.Data['Tags'])
               $str = $str.Replace('<FunctionsToExport>', $this.Data['FunctionsToExport'])
               $str = $str.Replace('<ReleaseNotes>', $this.Data['ReleaseNotes'])
+              $v = $str -as $type
             }
             else {
-              [BuildLog]::WriteWarning("Skipped rplacing placeholders in key module.data.'$k' as it can not be converted to string")
+              [BuildLog]::WriteWarning("Skipped replacing placeholders in key module.data.'$k' as it can not be converted to string")
             }
-            # set module data
-            switch ($true) {
-              $value_is_scriptblock { $this.Data[$k] = [scriptblock]::Create($str); break }
-              ($v -is [string]) { $this.Data[$k] = $str; break }
-              default { $this.Data[$k] = $v }
+            # Set module data
+            if ($value_is_scriptblock) {
+              $this.Data[$k] = [scriptblock]::Create($str);
+            }
+            else {
+              $this.Data[$k] = $v
             }
           }
         )
