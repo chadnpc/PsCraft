@@ -1127,21 +1127,21 @@ class BuildOrchestrator : PsCraft {
     [BuildLog]::WriteHeading("Compiling module type: $($this.ModuleType)")
     $progressHelper = [type]"ProgressUtil"
     $result = $progressHelper::WaitJob("Formatting module code", {
-        param($Orchestrator)
-        $mod = [PsModule]::Load($Orchestrator.Path)
+        param($o)
+        $mod = [PsModule]::Load($o.value.Path)
         $mod.FormatCode()
-        $success = switch ($Orchestrator.ModuleType) {
-          "Script" { $Orchestrator.CompileScriptModule() ; break }
-          "Binary" { $Orchestrator.CompileBinaryModule() ; break }
-          "Cim" { $Orchestrator.CompileCimModule() ; break }
-          "Manifest" { $Orchestrator.CompileManifestModule() ; break }
+        $success = switch ($o.value.ModuleType) {
+          "Script" { $o.value.CompileScriptModule() ; break }
+          "Binary" { $o.value.CompileBinaryModule() ; break }
+          "Cim" { $o.value.CompileCimModule() ; break }
+          "Manifest" { $o.value.CompileManifestModule() ; break }
           default {
-            [BuildLog]::WriteSevere("Unknown ModuleType: $($Orchestrator.ModuleType)")
+            [BuildLog]::WriteSevere("Unknown ModuleType: $($o.value.ModuleType)")
             $false
           }
         }
         return $success
-      }, $this
+      }, ([ref]$this)
     )
     return $result
   }
@@ -1570,47 +1570,44 @@ class BuildOrchestrator : PsCraft {
   }
 
   # ── Parallel file copy with progress tracking ──────────────────────────────
-  [void] CopyFilesParallel([string[]]$FilePaths, [string]$DestinationPath, [ScriptBlock]$ProgressCallback) {
+  [void] CopyFilesParallel([string[]]$FilePaths, [string]$DestinationPath, [ScriptBlock]$Callback) {
     if ($FilePaths.Count -eq 0) { return }
     $completed = 0
     try {
-      if ($null -eq $this._runner) { throw "ThreadRunner unavailable" }
-      $runner = [ThreadRunner]::new() # Fresh runner for file copy
-
-      $totalFiles = $FilePaths.Count
-
+      $jobs = [BackgroundJob[]]@()
       foreach ($filePath in $FilePaths) {
         $fileName = [IO.Path]::GetFileName($filePath)
-        $runner.AddJob("Copy $fileName", {
-            param($args)
-            $src = $args[0]
-            $dst = $args[1]
-            Copy-Item -Path $src -Destination $dst -Force -ErrorAction Stop
-            return [PSCustomObject]@{ Source = $src; Success = $? }
-          }, @($filePath, $DestinationPath))
-      }
-
-      # Monitor progress
-      $jobResults = $runner.ExecuteAll()
-      foreach ($result in $jobResults) {
-        if ($result.Success) {
-          $completed++
-          if ($ProgressCallback) {
-            & $ProgressCallback -Progress ($completed / $totalFiles * 100)
-          }
+        $jobs += @{
+          n = "[yellow]Copy $fileName[/]"
+          s = { param($f, $d) Copy-Item -Path $f -Destination $d -Force -ErrorAction Ignore }
+          a = $filePath, $DestinationPath
         }
       }
-    }
-    catch {
+      $results = [ThreadRunner]::Run("Copying Module Files", $jobs, $FilePaths.Count, "Modern")
+      $results | Out-String | Write-Host
+    } catch {
       [BuildLog]::WriteSevere("$($_ | Format-List * -Force | Out-String)")
       # ThreadRunner unavailable — fall back to sequential copy
       [BuildLog]::WriteWarning("ThreadRunner unavailable; using sequential file copy")
-      foreach ($filePath in $FilePaths) {
-        Copy-Item -Path $filePath -Destination $DestinationPath -Force -ErrorAction Continue
-        if ($ProgressCallback) {
-          $completed++
-          & $ProgressCallback -Progress ($completed / $FilePaths.Count * 100)
+      $console = [AnsiConsole]::Console
+      $progress = [Progress]::new($console)
+      $progress.RefreshRateMs = 80
+      # $progress.Config = @{} # Custom configuration if needed
+      $progress.Start([Action[ProgressContext]] {
+          param([ProgressContext]$ctx)
+
+          $task = $ctx.AddTask("[green]Copying Module Files to $DestinationPath[/]", [ProgressTaskSettings]::new())
+          foreach ($filePath in $FilePaths) {
+            Start-Sleep -Milliseconds 1000
+            Copy-Item -Path $filePath -Destination $DestinationPath -Force -ErrorAction Continue
+            $completed++
+            $task.Increment(($completed / $FilePaths.Count * 100))
+          }
         }
+      )
+      # run callback only after all files have been copied
+      if ($Callback -and $completed -eq $FilePaths.Count) {
+        & $Callback
       }
     }
   }
