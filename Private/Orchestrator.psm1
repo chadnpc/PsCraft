@@ -665,8 +665,7 @@ class PsModule : IDisposable {
     return $this.Build(@("Compile"))
   }
   [int] Build([string[]]$TaskList) {
-    $orchestrator = $this.GetBuildOrchestrator($TaskList)
-    return $orchestrator.Run($orchestrator.TaskList)
+    return $this.GetBuildOrchestrator($TaskList).Run()
   }
   [void] Publish() {
     $this.Publish('LocalRepo', [IO.DirectoryInfo]::new((Get-Location).Path))
