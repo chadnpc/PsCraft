@@ -1558,30 +1558,13 @@ class BuildOrchestrator : PsCraft {
   [void] CopyFilesParallel([string[]]$FilePaths, [string]$DestinationPath, [ScriptBlock]$Callback) {
     if ($FilePaths.Count -eq 0) { return }
     $completed = 0
-    try {
-      $jobs = [BackgroundJob[]]@()
-      foreach ($filePath in $FilePaths) {
-        $fileName = [IO.Path]::GetFileName($filePath)
-        $jobs += @{
-          n = "[yellow]Copy $fileName[/]"
-          s = { param($f, $d) Copy-Item -Path $f -Destination $d -Force -ErrorAction Ignore }
-          a = $filePath, $DestinationPath
-        }
-      }
-      $results = [ThreadRunner]::Run("Copying Module Files", $jobs, $FilePaths.Count, "Modern")
-      $results | Out-String | Write-Host
-    } catch {
-      [BuildLog]::WriteSevere("$($_ | Format-List * -Force | Out-String)")
-      # ThreadRunner unavailable — fall back to sequential copy
-      [BuildLog]::WriteWarning("ThreadRunner unavailable; using sequential file copy")
-      $console = [AnsiConsole]::Console
-      $progress = [Progress]::new($console)
+      $progress = [Progress]::new([AnsiConsole]::Console)
       $progress.RefreshRateMs = 80
       # $progress.Config = @{} # Custom configuration if needed
       $progress.Start([Action[ProgressContext]] {
           param([ProgressContext]$ctx)
 
-          $task = $ctx.AddTask("[green]Copying Module Files to $DestinationPath[/]", [ProgressTaskSettings]::new())
+          $task = $ctx.AddTask("[green]Copying ModuleFiles to $DestinationPath[/]", [ProgressTaskSettings]::new())
           foreach ($filePath in $FilePaths) {
             Start-Sleep -Milliseconds 1000
             Copy-Item -Path $filePath -Destination $DestinationPath -Force -ErrorAction Continue
@@ -1592,9 +1575,8 @@ class BuildOrchestrator : PsCraft {
       )
       # run callback only after all files have been copied
       if ($Callback -and $completed -eq $FilePaths.Count) {
-        & $Callback
+        $Callback.Invoke($DestinationPath)
       }
-    }
   }
 
   [scriptblock] GetCallbackScript([string]$ActionName) {
@@ -1605,7 +1587,7 @@ class BuildOrchestrator : PsCraft {
     return @{
       CopyFilesParallel    = {
         # this callback will check if there are any empty directories in the destination path and adds a ".gitkeep" in each one of those.
-        param($source, $destination)
+        param($destination)
         $emptyDirs = Get-ChildItem -Path $destination -Directory -Recurse | Where-Object { (Get-ChildItem -Path $_.FullName -File -ErrorAction Ignore).Count -eq 0 -and (Get-ChildItem -Path $_.FullName -Directory -ErrorAction Ignore).Count -eq 0 }
         foreach ($emptyDir in $emptyDirs) {
           Set-Content -Path (Join-Path -Path $emptyDir.FullName -ChildPath '.gitkeep') -Value ''
