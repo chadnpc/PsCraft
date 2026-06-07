@@ -1102,7 +1102,8 @@ class BuildOrchestrator : PsCraft {
         param($o) return [PsModule]::Load($o.value.Path).FormatCode()
       }, ([ref]$this)
     )
-    $formatResult | Format-List * | Out-String | Write-Host
+    "-- Formatting results:" | Write-Host -f Yellow
+    $formatResult.Output | Format-List * | Out-String | Write-Host -f Yellow
     $success = switch ($this.ModuleType) {
       "Script" { $this.CompileScriptModule() ; break }
       "Binary" { $this.CompileBinaryModule() ; break }
