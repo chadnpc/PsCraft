@@ -158,6 +158,7 @@ class BuildLog {
       $i++
       $date + $tag + $_
     }
+    $console = [AnsiConsole]::Console
     $text = $lines -join "`n"
     $text_lines = $text.Split("`n")
 
@@ -166,22 +167,22 @@ class BuildLog {
     if ($text_lines.Count -gt 1) {
       $l1 = $prefix + " " + $text_lines[0]
       $l2 = $text_lines[1..($text_lines.Count - 1)] -join "`n"
-      [AnsiConsole]::Console.Markup("[$color]$l1[/]")
-      [AnsiConsole]::Console.Write("`n$l2`n")
+      $console.Markup("[$color]$l1[/]")
+      $console.Write("`n$l2`n")
       try {
-        [AnsiConsole]::Console.Markup("[$color]$l1[/]")
-        [AnsiConsole]::Console.Write("`n$l2`n")
+        $console.Markup("[$color]$l1[/]")
+        $console.Write("`n$l2`n")
       } catch {
         Write-Host "$($_ | Format-List * -Force | Out-String)" -f Red
-        [AnsiConsole]::Console.Write("$l1")
-        [AnsiConsole]::Console.Write("`n$l2`n")
+        $console.Write("$l1")
+        $console.Write("`n$l2`n")
       }
     } else {
       try {
-        [AnsiConsole]::Console.Markup("[$color]$prefix $text[/]")
+        $console.Markup("[$color]$prefix $text[/]")
       } catch {
         Write-Host "$($_ | Format-List * -Force | Out-String)" -f Red
-        [AnsiConsole]::Console.Write("$prefix $text")
+        $console.Write("$prefix $text")
       }
     }
   }
