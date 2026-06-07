@@ -325,14 +325,9 @@ class PsModule : IDisposable {
       # - Build steps
       # - Params ...
     }
-    $resolvedPath = $Path
-    if ($null -eq $resolvedPath -or [string]::IsNullOrWhiteSpace($resolvedPath.FullName)) {
-      $resolvedPath = [IO.DirectoryInfo]::new((Get-Location).Path)
-    }
     $this.Name = [string]::IsNullOrWhiteSpace($Name) ? [IO.Path]::GetFileNameWithoutExtension([IO.Path]::GetRandomFileName()) : $Name
     $mName = $this.Name
-    $moduleRoot = if ($null -ne $resolvedPath -and -not [string]::IsNullOrWhiteSpace($resolvedPath.FullName)) { $resolvedPath.FullName } else { (Get-Location).Path }
-    $mroot = [System.IO.Path]::Combine($moduleRoot, $mName)
+    $mroot = $this.ResolveModuleRoot($Path)
     [void][PsModuleBase]::validatePath($mroot); $this.Path = $mroot
     $this.Files = New-Object System.Collections.Generic.List[ModuleFile]
     $this.Folders = New-Object System.Collections.Generic.List[ModuleFolder]
@@ -443,7 +438,7 @@ class PsModule : IDisposable {
     )
     # Always ensure Path is set for New-ModuleManifest
     if (!$PM.ContainsKey('Path')) {
-      $PM['Path'] = [IO.Path]::Combine($this.Path.FullName, "$($this.Name).psd1")
+      $PM['Path'] = $this.data.Path
     }
     New-ModuleManifest @PM | Out-Null
     $tree = $this.GetDirTree()
@@ -719,6 +714,12 @@ class PsModule : IDisposable {
   [BuildOrchestrator] GetBuildOrchestrator([string[]]$TaskList) {
     [validateNotNullOrEmpty()][string[]]$TaskList = $TaskList
     return [BuildOrchestrator]::new($this.Path, $TaskList, $this.data.RequiredModules, $PSCmdlet)
+  }
+  [string] ResolveModuleRoot([IO.DirectoryInfo]$Path) {
+    return $this.ResolveModuleRoot($this.Name, $Path)
+  }
+  [string] ResolveModuleRoot([string]$Name, [IO.DirectoryInfo]$Path) {
+    return [PsModuleData]::ResolveModuleRoot($Name, $Path)
   }
   [void] Dispose() {
     $this.Data = $null
