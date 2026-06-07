@@ -37,7 +37,6 @@ function Set-BuildVariables {
         } else {
           New-Item -Path $LocEnvFile.FullName -ItemType File -ErrorAction Stop | Out-Null
         }
-        [BuildLog]::Write("Created a new .env file`n")
       }
       Set-Env -source $LocEnvFile -Scope Process
       if (![string]::IsNullOrWhiteSpace($env:LAST_BUILD_ID)) {
@@ -48,7 +47,7 @@ function Set-BuildVariables {
         }
       }
     }
-    [BuildLog]::WriteHeading("Set Build Variables for Version: $Version")
+    [BuildLog]::WriteHeading("Set Build Variables for $($Data.ModuleName) version: $Version")
     Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildStart') -Value $(Get-Date -Format o)
     Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildScriptPath') -Value $Path
     Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildSystem') -Value $(if ([bool][int]$env:IsCI -or ($Env:BUILD_BUILDURI -like 'vstfs:*')) { 'VSTS' } else { [System.Environment]::MachineName })
