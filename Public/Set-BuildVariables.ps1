@@ -34,7 +34,8 @@ function Set-BuildVariables {
       if (!$LocEnvFile.Exists) {
         if ($ExEnvFile.Exists) {
           Copy-Item $ExEnvFile $LocEnvFile -Force
-        } else {
+        }
+        else {
           New-Item -Path $LocEnvFile.FullName -ItemType File -ErrorAction Stop | Out-Null
         }
       }
@@ -54,7 +55,7 @@ function Set-BuildVariables {
     Set-Env -Name ('{0}{1}' -f $Prefix, 'ProjectPath') -Value $(if ([bool][int]$env:IsCI) { $Env:SYSTEM_DEFAULTWORKINGDIRECTORY } else { $Path })
     Set-Env -Name ('{0}{1}' -f $Prefix, 'BranchName') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_SOURCEBRANCHNAME } else { Push-Location $Path; $h = "$(try { (git rev-parse --abbrev-ref HEAD).Trim() } catch { $null })"; Pop-Location; $h })
     Set-Env -Name ('{0}{1}' -f $Prefix, 'CommitMessage') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_SOURCEVERSIONMESSAGE } else { Push-Location $Path; $m = "$(try { (git log --format=%B -n 1).Trim() } catch { $null })"; Pop-Location; $m })
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildNumber') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_BUILDNUMBER } else { $(if ([string]::IsNullOrWhiteSpace($Version)) { [version]::new('1.0.0.1') } else { $Version }) })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildNumber') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_BUILDNUMBER } else { $(if ([string]::IsNullOrWhiteSpace($Version)) { [version]::new('0.0.1') } else { $Version }) })
     Set-Variable -Name BuildNumber -Value ([Environment]::GetEnvironmentVariable($Prefix + 'BuildNumber')) -Scope Local -Force
     Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildOutput') -Value $([IO.path]::Combine($Path, 'BuildOutput'))
     Set-Variable -Name BuildOutput -Value ([Environment]::GetEnvironmentVariable($Prefix + 'BuildOutput')) -Scope Local -Force
