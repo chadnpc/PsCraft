@@ -1124,35 +1124,26 @@ class BuildOrchestrator : PsCraft {
 
   # ── Compilation dispatch and methods ─────────────────────────────────────────
   [bool] Compile() {
-    # ------------------------------------------
-      $writer = [AnsiConsole]::Console.GetWriter()
-      $status = [Status]::new($writer)
-      $status.RefreshRateMs = 80
-
-      $status.Start('Downloading metadata', [Action[StatusContext]] {
-          param([StatusContext]$ctx)
-          Start-Sleep -Milliseconds 450
-          $ctx.Update('Finishing download')
-          Start-Sleep -Milliseconds 250
-        }
-      )
-      # ===========================================
-
     [BuildLog]::WriteHeading("Compiling module type: $($this.ModuleType)")
-    [BuildLog]::WriteStep("Formatting module code...")
-    $mod = [PsModule]::Load($this.Path)
-    $mod.FormatCode()
-    $success = switch ($this.ModuleType) {
-      "Script" { $this.CompileScriptModule() }
-      "Binary" { $this.CompileBinaryModule() }
-      "Cim" { $this.CompileCimModule() }
-      "Manifest" { $this.CompileManifestModule() }
-      default {
-        [BuildLog]::WriteSevere("Unknown ModuleType: $($this.ModuleType)")
-        $false
-      }
-    }
-    return $success
+    $progressHelper = [type]"ProgressUtil"
+    $result = $progressHelper::WaitJob("Formatting module code", {
+        param($Orchestrator)
+        $mod = [PsModule]::Load($Orchestrator.Path)
+        $mod.FormatCode()
+        $success = switch ($Orchestrator.ModuleType) {
+          "Script" { $Orchestrator.CompileScriptModule() ; break }
+          "Binary" { $Orchestrator.CompileBinaryModule() ; break }
+          "Cim" { $Orchestrator.CompileCimModule() ; break }
+          "Manifest" { $Orchestrator.CompileManifestModule() ; break }
+          default {
+            [BuildLog]::WriteSevere("Unknown ModuleType: $($Orchestrator.ModuleType)")
+            $false
+          }
+        }
+        return $success
+      }, $this
+    )
+    return $result
   }
 
   [bool] CompileScriptModule() {
