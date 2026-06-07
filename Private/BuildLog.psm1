@@ -110,13 +110,17 @@ class BuildLog {
     [BuildLog]::_Write($Message, $false, $false, $false, $true)
   }
 
-  static [void] WriteStatus([string]$Message, [string]$Level = 'info') {
+  static [void] WriteStatus([string]$Message) {
+    [BuildLog]::WriteStatus($Message, 'info')
+  }
+  static [void] WriteStatus([string]$Message, [string]$Level) {
     $color = switch ($Level.ToLower()) {
       'success' { 'green'; break }
       'warning' { 'yellow'; break }
       'error' { 'red'; break }
       'command' { 'magenta3'; break }
       default {
+        # info and any other unresolved level
         'cyan1'
       }
     }
@@ -155,11 +159,30 @@ class BuildLog {
       $date + $tag + $_
     }
     $text = $lines -join "`n"
-    try {
-      [AnsiConsole]::Console.Markup("[$color]$prefix[/] ")
-      [AnsiConsole]::Console.Write("`n$text`n")
-    } catch {
-      Write-Host "$($_ | Format-List * -Force | Out-String)" -f Red`
+    $text_lines = $text.Split("`n")
+
+    # two cases: single line or multi line, and in both cases, markup could fail rendering.
+    # i.e: sometimes markup just fails when there are unescaped '[' or ']'
+    if ($text_lines.Count -gt 1) {
+      $l1 = $prefix + " " + $text_lines[0]
+      $l2 = $text_lines[1..($text_lines.Count - 1)] -join "`n"
+      [AnsiConsole]::Console.Markup("[$color]$l1[/]")
+      [AnsiConsole]::Console.Write("`n$l2`n")
+      try {
+        [AnsiConsole]::Console.Markup("[$color]$l1[/]")
+        [AnsiConsole]::Console.Write("`n$l2`n")
+      } catch {
+        Write-Host "$($_ | Format-List * -Force | Out-String)" -f Red
+        [AnsiConsole]::Console.Write("$l1")
+        [AnsiConsole]::Console.Write("`n$l2`n")
+      }
+    } else {
+      try {
+        [AnsiConsole]::Console.Markup("[$color]$prefix $text[/]")
+      } catch {
+        Write-Host "$($_ | Format-List * -Force | Out-String)" -f Red
+        [AnsiConsole]::Console.Write("$prefix $text")
+      }
     }
   }
 
