@@ -1133,7 +1133,7 @@ class BuildOrchestrator : PsCraft {
         }
       }
 
-      [BuildLog]::WriteStep("Create file templates")
+      [BuildLog]::WriteStep("Create templates")
       $this.CopyFilesParallel($filesToCopy, $versionDir, $this.GetCallbackScript('CopyFilesParallel'))
       $this._logger.LogInfoLine("Compile complete. Files: $($filesToCopy.Count)")
 
@@ -1527,7 +1527,7 @@ class BuildOrchestrator : PsCraft {
     $progress.Start([Action[ProgressContext]] {
         param([ProgressContext]$ctx)
 
-        $task = $ctx.AddTask("[green]Copying ModuleFiles to $DestinationPath[/]", [ProgressTaskSettings]::new())
+        $task = $ctx.AddTask("[green]Copying ModuleFiles[/]", [ProgressTaskSettings]::new())
         foreach ($filePath in $FilePaths) {
           Start-Sleep -Milliseconds 1000
           Copy-Item -Path $filePath -Destination $DestinationPath -Force -ErrorAction Continue
