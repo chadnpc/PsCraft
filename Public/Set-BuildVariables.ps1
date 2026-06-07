@@ -37,7 +37,7 @@ function Set-BuildVariables {
         } else {
           New-Item -Path $LocEnvFile.FullName -ItemType File -ErrorAction Stop | Out-Null
         }
-        [BuildLog]::Write('Created a new .env file')
+        [BuildLog]::Write("Created a new .env file`n")
       }
       Set-Env -source $LocEnvFile -Scope Process
       if (![string]::IsNullOrWhiteSpace($env:LAST_BUILD_ID)) {
@@ -49,21 +49,21 @@ function Set-BuildVariables {
       }
     }
     [BuildLog]::WriteHeading("Set Build Variables for Version: $Version")
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildStart')       -Value $(Get-Date -Format o)
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildScriptPath')  -Value $Path
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildSystem')      -Value $(if ([bool][int]$env:IsCI -or ($Env:BUILD_BUILDURI -like 'vstfs:*')) { 'VSTS' } else { [System.Environment]::MachineName })
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'ProjectPath')      -Value $(if ([bool][int]$env:IsCI) { $Env:SYSTEM_DEFAULTWORKINGDIRECTORY } else { $Path })
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BranchName')       -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_SOURCEBRANCHNAME } else { Push-Location $Path; $h = "$(try { (git rev-parse --abbrev-ref HEAD).Trim() } catch { $null })"; Pop-Location; $h })
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'CommitMessage')    -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_SOURCEVERSIONMESSAGE } else { Push-Location $Path; $m = "$(try { (git log --format=%B -n 1).Trim() } catch { $null })"; Pop-Location; $m })
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildNumber')      -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_BUILDNUMBER } else { $(if ([string]::IsNullOrWhiteSpace($Version)) { [version]::new('1.0.0.1') } else { $Version }) })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildStart') -Value $(Get-Date -Format o)
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildScriptPath') -Value $Path
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildSystem') -Value $(if ([bool][int]$env:IsCI -or ($Env:BUILD_BUILDURI -like 'vstfs:*')) { 'VSTS' } else { [System.Environment]::MachineName })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'ProjectPath') -Value $(if ([bool][int]$env:IsCI) { $Env:SYSTEM_DEFAULTWORKINGDIRECTORY } else { $Path })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BranchName') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_SOURCEBRANCHNAME } else { Push-Location $Path; $h = "$(try { (git rev-parse --abbrev-ref HEAD).Trim() } catch { $null })"; Pop-Location; $h })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'CommitMessage') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_SOURCEVERSIONMESSAGE } else { Push-Location $Path; $m = "$(try { (git log --format=%B -n 1).Trim() } catch { $null })"; Pop-Location; $m })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildNumber') -Value $(if ([bool][int]$env:IsCI) { $Env:BUILD_BUILDNUMBER } else { $(if ([string]::IsNullOrWhiteSpace($Version)) { [version]::new('1.0.0.1') } else { $Version }) })
     Set-Variable -Name BuildNumber -Value ([Environment]::GetEnvironmentVariable($Prefix + 'BuildNumber')) -Scope Local -Force
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildOutput')      -Value $([IO.path]::Combine($Path, 'BuildOutput'))
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'BuildOutput') -Value $([IO.path]::Combine($Path, 'BuildOutput'))
     Set-Variable -Name BuildOutput -Value ([Environment]::GetEnvironmentVariable($Prefix + 'BuildOutput')) -Scope Local -Force
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'ProjectName')      -Value ($Data.ModuleName)
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'ProjectName') -Value ($Data.ModuleName)
     Set-Variable -Name ProjectName -Value ([Environment]::GetEnvironmentVariable($Prefix + 'ProjectName')) -Scope Local -Force
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'PSModulePath')     -Value $([IO.path]::Combine($BuildOutput, $ProjectName, $BuildNumber))
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'PSModulePath') -Value $([IO.path]::Combine($BuildOutput, $ProjectName, $BuildNumber))
     Set-Env -Name ('{0}{1}' -f $Prefix, 'PSModuleManifest') -Value $([IO.path]::Combine($BuildOutput, $ProjectName, $BuildNumber, "$ProjectName.psd1"))
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'ModulePath')       -Value $(if (![string]::IsNullOrWhiteSpace($Env:PSModuleManifest)) { [IO.Path]::GetDirectoryName($Env:PSModuleManifest) } else { [IO.Path]::GetDirectoryName($BuildOutput) })
-    Set-Env -Name ('{0}{1}' -f $Prefix, 'ReleaseNotes')     -Value ($data.ReleaseNotes)
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'ModulePath') -Value $(if (![string]::IsNullOrWhiteSpace($Env:PSModuleManifest)) { [IO.Path]::GetDirectoryName($Env:PSModuleManifest) } else { [IO.Path]::GetDirectoryName($BuildOutput) })
+    Set-Env -Name ('{0}{1}' -f $Prefix, 'ReleaseNotes') -Value ($data.ReleaseNotes)
   }
 }
