@@ -109,7 +109,7 @@ class PsModuleDefaults {
     $data = switch ($Type) {
       "Script" {
         @{
-          Path                  = [IO.Path]::Combine((Get-Location).Path, "$Name.psd1")
+          Path                  = [IO.Path]::Combine([PsModuleData]::ResolveModuleRoot($Name, $Path), "$Name.psd1")
           Guid                  = [guid]::NewGuid()
           Year                  = [datetime]::Now.Year
           Author                = $authorName
@@ -152,7 +152,7 @@ class PsModuleDefaults {
       }
       "Binary" {
         @{
-          Path                  = [IO.Path]::Combine((Get-Location).Path, "$Name.psd1")
+          Path                  = [IO.Path]::Combine([PsModuleData]::ResolveModuleRoot($Name, $Path), "$Name.psd1")
           Guid                  = [guid]::NewGuid()
           Year                  = [datetime]::Now.Year
           Author                = $authorName
@@ -192,7 +192,7 @@ class PsModuleDefaults {
       }
       "Manifest" {
         @{
-          Path                  = [IO.Path]::Combine((Get-Location).Path, "$Name.psd1")
+          Path                  = [IO.Path]::Combine([PsModuleData]::ResolveModuleRoot($Name, $Path), "$Name.psd1")
           Guid                  = [guid]::NewGuid()
           Year                  = [datetime]::Now.Year
           Author                = $authorName
@@ -230,7 +230,7 @@ class PsModuleDefaults {
       }
       "Cim" {
         @{
-          Path                  = [IO.Path]::Combine((Get-Location).Path, "$Name.psd1")
+          Path                  = [IO.Path]::Combine([PsModuleData]::ResolveModuleRoot($Name, $Path), "$Name.psd1")
           Guid                  = [guid]::NewGuid()
           Year                  = [datetime]::Now.Year
           Author                = $authorName
@@ -394,11 +394,11 @@ class PsModuleDefaults {
     }
     return [PsModuleSchema]::new($schema)
   }
-
   hidden [scriptblock] SafeGetScriptBlock([string]$Ps1filePath) {
     try {
       return $this.GetScriptBlock($Ps1filePath)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Script block retrieval failed for $Ps1filePath`n$($_ | Format-List * -Force | Out-String)")
       return [scriptblock]::Create("{}");
     }
@@ -406,7 +406,8 @@ class PsModuleDefaults {
   hidden [string] SafeGetTemplateText([string]$filePath) {
     try {
       return $this.GetTemplateText($filePath)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Template text retrieval failed for $filePath`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -414,7 +415,8 @@ class PsModuleDefaults {
   hidden [string] SafeGetReadmeText([string]$ModuleName) {
     try {
       return (PsModuleBase\Get-ModuleReadmeText -n $ModuleName 2>$null)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Readme text retrieval failed for $ModuleName`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -422,7 +424,8 @@ class PsModuleDefaults {
   hidden [string] SafeGetLicenseText() {
     try {
       return (PsModuleBase\Get-ModuleLicenseText 2>$null)
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("License text retrieval failed`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -430,7 +433,8 @@ class PsModuleDefaults {
   hidden [string] GetLocalLicenseText() {
     try {
       return [IO.File]::ReadAllText((Join-Path (Split-Path -Parent $Script:PSScriptRoot) "LICENSE"))
-    } catch {
+    }
+    catch {
       [BuildLog]::WriteWarning("Local license text retrieval failed`n$($_ | Format-List * -Force | Out-String)")
       return ""
     }
@@ -508,7 +512,8 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
   [void] Set($k, $v) {
     if ($this.ContainsKey($k)) {
       $this[$k] = $v
-    } else {
+    }
+    else {
       $this.Add($k, $v)
     }
   }
@@ -521,14 +526,24 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
         $formatted = Invoke-Formatter -ScriptDefinition $this[$k].ToString() -Verbose:$false
         if ($this[$k] -is [scriptblock]) {
           $this[$k] = [scriptblock]::Create($formatted)
-        } else {
+        }
+        else {
           $this[$k] = $formatted
         }
-      } catch {
+      }
+      catch {
         # keep original on formatter failure
         [BuildLog]::WriteWarning("Formatter failed for key: $k`n$($_ | Format-List * -Force | Out-String)")
       }
     }
+  }
+  static [string] ResolveModuleRoot([string]$Name, [IO.DirectoryInfo]$Path) {
+    [string]$resolvedPath = $Path
+    if ($null -eq $resolvedPath -or [string]::IsNullOrWhiteSpace($resolvedPath)) {
+      $resolvedPath = [IO.DirectoryInfo]::new((Get-Location).Path)
+    }
+    $moduleRoot = if ($null -ne $resolvedPath -and ![string]::IsNullOrWhiteSpace($resolvedPath)) { $resolvedPath } else { (Get-Location).Path }
+    return [System.IO.Path]::Combine($moduleRoot, $Name)
   }
   static [object] ReplaceTemplates([object]$data) {
     # Normalize input: accept either a dictionary (PsModuleData / hashtable)
@@ -539,7 +554,8 @@ class PsModuleData : System.Collections.Generic.Dictionary[string, Object] {
     $dict = $null
     if ($data -is [System.Collections.IDictionary]) {
       $dict = $data
-    } elseif ($null -ne $data -and $data -isnot [string] -and $data -is [System.Collections.IEnumerable]) {
+    }
+    elseif ($null -ne $data -and $data -isnot [string] -and $data -is [System.Collections.IEnumerable]) {
       foreach ($x in $data) {
         if ($x -is [System.Collections.IDictionary]) { $dict = $x; break }
       }
