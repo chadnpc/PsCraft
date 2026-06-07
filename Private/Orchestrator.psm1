@@ -662,7 +662,10 @@ class PsModule : IDisposable {
     return $success
   }
   [int] Build() {
-    $orchestrator = $this.GetBuildOrchestrator(@("Compile"))
+    return $this.Build(@("Compile"))
+  }
+  [int] Build([string[]]$TaskList) {
+    $orchestrator = $this.GetBuildOrchestrator($TaskList)
     return $orchestrator.Run($orchestrator.TaskList)
   }
   [void] Publish() {
